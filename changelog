@@ -1,0 +1,8 @@
+17 August 2011:
+	* reworked the forward declarations for some of the circular references. Not entirely satisfied, but it compiles
+	* totally redid the alias allocation scheme. Still need to run checks of incoming CID/RID against aliases in progress, and aliases in progress against themselves.
+	* renamed OLCB_Handler to OLCB_Virtual_Node to make its purpose clearer
+	* renamed OLCB_AliasCache to OLCB_Alias_Cache for consistency
+  TODO:
+	* Update the examples to reflect the changes here.
+	* Complete the CID/RID algorithm: Respond to RID frames during alias allocation. Check all generated aliases against other NIDa's currently being allocated and extant Virtual Node instanecs before proceeding with allocation on CAN
