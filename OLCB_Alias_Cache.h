@@ -3,9 +3,14 @@
 
 class OLCB_Alias_Cache;
 
+#if defined(__AVR__)
 #include <stdlib.h>
-#include <string.h>
+#if defined(OLCB_DEBUG)
 #include "WProgram.h"
+#endif
+#endif
+
+#include <string.h>
 #include "OLCB_NodeID.h"
 
 class OLCB_Alias_Cache
@@ -22,8 +27,13 @@ class OLCB_Alias_Cache
       //if already inited, release existing memory? TODO
     }
     _size = newSize;
+#if defined(__arm__)
+    _nids = new OLCB_NodeID[_size];
+    _hits = new uint8_t[_size];
+#elif defined(__AVR__)
     _nids = (OLCB_NodeID*)malloc(sizeof(OLCB_NodeID)*_size);
     _hits = (uint8_t*)malloc(sizeof(uint8_t)*_size);
+#endif
     for(uint8_t i = 0; i < _size; ++i)
     {
       _nids[i].set(0,0,0,0,0,0);

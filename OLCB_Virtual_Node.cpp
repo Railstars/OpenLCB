@@ -1,11 +1,16 @@
 #include "OLCB_Virtual_Node.h"
 
+
 void OLCB_Virtual_Node::setNID(OLCB_NodeID *newNID)
 {
   //Only allocate memory for a new NID the first time this gets called!
   if(!NID || (NID == _link->getNodeID())) //don't want to over-write the link's ID!
   {
+#if defined(__arm__)
+    NID = new OLCB_NodeID;
+#elif defined(__AVR__)
     NID = (OLCB_NodeID*)malloc(sizeof(OLCB_NodeID));
+#endif
   }
   memcpy(NID,newNID, sizeof(OLCB_NodeID));
 }

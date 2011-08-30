@@ -1,9 +1,10 @@
 #ifndef __OLCB_CAN_BUFFER_H__
 #define __OLCB_CAN_BUFFER_H__
 
+#include <string.h>
 #include "OLCB_NodeID.h"
 #include "OLCB_EventID.h"
-#include <can.h>
+#include "can.h"
 
 /**
  * OpenLCB CAN MTI format (3 bits)

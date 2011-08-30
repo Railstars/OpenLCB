@@ -1,6 +1,8 @@
 #ifndef __OLCB_DATAGRAM_HANDLER__
 #define __OLCB_DATAGRAM_HANDLER__
 
+#include <string.h>
+#include "WProgram.h"
 #include "OLCB_Link.h"
 #include "OLCB_Virtual_Node.h"
 #include "OLCB_Datagram.h"
@@ -16,8 +18,13 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
  public:
   OLCB_Datagram_Handler() : OLCB_Virtual_Node(), _rxDatagramBufferFree(true), _txDatagramBufferFree(true), _initialized(false), _sentTime(0), _txFlag(false), _loc(0)
   {
+#if defined(__arm__)
+    _rxDatagramBuffer = new OLCB_Datagram;
+    _txDatagramBuffer = new OLCB_Datagram;
+#elif defined(__AVR__)
     _rxDatagramBuffer = (OLCB_Datagram*)malloc(sizeof(OLCB_Datagram));
     _txDatagramBuffer = (OLCB_Datagram*)malloc(sizeof(OLCB_Datagram));
+#endif
   }
   
   void setLink(OLCB_Link *newLink);

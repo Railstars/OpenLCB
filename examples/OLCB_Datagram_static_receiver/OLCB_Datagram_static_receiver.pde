@@ -1,16 +1,4 @@
-#include <OLCB_AliasCache.h>
-#include <OLCB_Buffer.h>
-#include <OLCB_CAN_Buffer.h>
-#include <OLCB_Link.h>
-#include <OLCB_CAN_Link.h>
-#include <OLCB_Datagram.h>
-#include <OLCB_Datagram_Handler.h>
-#include <OLCB_Event.h>
-#include <OLCB_EventID.h>
-#include <OLCB_Handler.h>
-#include <OLCB_NodeID.h>
-#include <OLCB_Stream.h>
-
+#include <OpenLCB.h>
 #include <can.h>
 
 class simpleDatagramReceiver: public OLCB_Datagram_Handler
@@ -20,10 +8,10 @@ class simpleDatagramReceiver: public OLCB_Datagram_Handler
   {
      //To have made it this far, we can be sure that _rxDatagramBuffer has a valid datagram loaded up, and that it is in fact addressed to us.
      Serial.println("Received a datagram!");
-     for(int i = 0; i < _rxDatagramBuffer.length; ++i)
+     for(int i = 0; i < _rxDatagramBuffer->length; ++i)
      {
        Serial.print("    ");
-       Serial.println(_rxDatagramBuffer.data[i], HEX);
+       Serial.println(_rxDatagramBuffer->data[i], HEX);
      }
      return true; //returning true causes an ACK; returning false a NAK. Not very sophisticated yet...
   }

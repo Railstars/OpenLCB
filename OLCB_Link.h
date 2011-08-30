@@ -1,7 +1,7 @@
 #ifndef __OLCB_LINK_H__
 #define __OLCB_LINK_H__
 
-#include <can.h>
+#include "can.h"
 #include <stdint.h>
 #include "OLCB_Event.h"
 #include "OLCB_Virtual_Node.h"

@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "OLCB_CAN_Buffer.h"
 
 

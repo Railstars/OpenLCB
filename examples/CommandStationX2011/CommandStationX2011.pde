@@ -60,19 +60,9 @@ KNOWN BUGS:
 //#include <MemoryFree.h>
 
 #define DATAGRAM_LENGTH 5 //5 bytes at most. really.
+#define OLCB_DEBUG
 
-#include <OLCB_AliasCache.h>
-#include <OLCB_Buffer.h>
-#include <OLCB_CAN_Buffer.h>
-#include <OLCB_CAN_Link.h>
-#include <OLCB_Datagram.h>
-#include <OLCB_Datagram_Handler.h>
-#include <OLCB_Event.h>
-#include <OLCB_EventID.h>
-#include <OLCB_Handler.h>
-#include <OLCB_Link.h>
-#include <OLCB_NodeID.h>
-#include <OLCB_Stream.h>
+#include <OpenLCB.h>
 
 #include <DCCPacket.h>
 #include <DCCPacketQueue.h>
@@ -92,13 +82,13 @@ OLCB_CAN_Link link(&nid);
 
 void setup()
 {
-//  Serial.begin(115200);
-//  Serial.println("Hello world!");
+  //  Serial.begin(115200);
+  //  Serial.println("Hello world!");
 //  delay(50);
   link.initialize();
   factory.setLink((OLCB_Link*)&link);
-//  Serial.println(freeMemory(),DEC);
-//  Serial.println(sizeof(OLCB_Datagram), DEC);
+//  //  Serial.println(freeMemory(),DEC);
+//  //  Serial.println(sizeof(OLCB_Datagram), DEC);
   packetScheduler.setup();
 }
 
@@ -106,5 +96,5 @@ void loop()
 {
   packetScheduler.update();
   link.update();
-//  Serial.println(freeMemory(),DEC);
+//  //  Serial.println(freeMemory(),DEC);
 }

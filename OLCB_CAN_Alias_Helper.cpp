@@ -1,4 +1,4 @@
-#include "OLCB_CAN_Alias_Helper.h"
+//#include "OLCB_CAN_Alias_Helper.h"
 #include "OLCB_CAN_Link.h"
 
 void OLCB_CAN_Alias_Helper::initialize(OLCB_CAN_Link *link)
@@ -27,23 +27,23 @@ void OLCB_CAN_Alias_Helper::handleCID(OLCB_CAN_Buffer *CIDMsg)
 
 void OLCB_CAN_Alias_Helper::update(void)
 {
-	Serial.println("=Alias_Helper::Update");
+//	Serial.println("=Alias_Helper::Update");
 	//check RID queue.
 	if(!_RID.isEmpty())
 	{
-		Serial.println(" Checking RID");
+//		Serial.println(" Checking RID");
 		private_nodeID_t *iter;
 		while(!_RID.isEmpty() && (millis() - _RID.peek()->time_stamp) > RID_TIME_WAIT)
 		{
 			iter = _RID.pop();
 			if(!_link->sendRID(iter->node))
 			{
-				Serial.println("Failure to send RID!?");
+//				Serial.println("Failure to send RID!?");
 				//can't send a RID just now, outgoing CAN queue is busy
 				_RID.push(iter);
 				return; //just quit for now.
 			}
-			Serial.println("RID SENT!");
+//			Serial.println("RID SENT!");
 			//TODO send AMD and InitializationComplete
 		}
 	}
@@ -51,7 +51,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 	//check CID4 queue.
 	if(!_CID4.isEmpty())
 	{
-		Serial.println(" Checking CID4");
+//		Serial.println(" Checking CID4");
 		private_nodeID_t *iter;
 		while(!_CID4.isEmpty())
 		{
@@ -68,7 +68,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 	//check CID3 queue.
 	if(!_CID3.isEmpty())
 	{
-		Serial.println(" Checking CID3");
+//		Serial.println(" Checking CID3");
 		private_nodeID_t *iter;
 		while(!_CID3.isEmpty())
 		{
@@ -85,7 +85,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 	//check CID2 queue.
 	if(!_CID2.isEmpty())
 	{
-		Serial.println(" Checking CID2");
+//		Serial.println(" Checking CID2");
 		private_nodeID_t *iter;
 		while(!_CID2.isEmpty())
 		{
@@ -102,7 +102,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 	//check CID1 queue.
 	if(!_CID1.isEmpty())
 	{
-		Serial.println(" Checking CID1");
+//		Serial.println(" Checking CID1");
 		private_nodeID_t *iter;
 		while(!_CID1.isEmpty())
 		{
@@ -129,16 +129,16 @@ void OLCB_CAN_Alias_Helper::update(void)
 
 bool OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
-	Serial.println("=allocateAlias");
+//	Serial.println("=allocateAlias");
 	if(_CID1.isFull())
 	{
-		Serial.println("  but _CID1 is full!");
+//		Serial.println("  but _CID1 is full!");
 		//return false;
 	}
 	uint32_t lfsr1 = (((uint32_t)nodeID->val[0]) << 16) | (((uint32_t)nodeID->val[1]) << 8) | ((uint32_t)nodeID->val[2]);
     uint32_t lfsr2 = (((uint32_t)nodeID->val[3]) << 16) | (((uint32_t)nodeID->val[4]) << 8) | ((uint32_t)nodeID->val[5]);
 	nodeID->alias = (lfsr1 ^ lfsr2 ^ (lfsr1>>12) ^ (lfsr2>>12) )&0xFFF;
-	nodeID->print();
+//	nodeID->print();
 	
 	return (_CID1.push(nodeID, lfsr1, lfsr2));
 }

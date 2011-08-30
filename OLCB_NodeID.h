@@ -2,7 +2,6 @@
 #define __OLCB_NODEID_H__
 
 #include <stdint.h>
-#include "WProgram.h"
 
 class OLCB_NodeID {
   public:
@@ -108,9 +107,10 @@ class OLCB_NodeID {
       val[i] = src->val[i];
     }
   }
-  
+
   void print(void)
   {
+#if defined(__AVR__) & defined(OLCB_DEBUG)
     char id[] = "nid:   ";
     Serial.print("alias: ");
     Serial.println(alias,DEC);
@@ -126,6 +126,7 @@ class OLCB_NodeID {
     Serial.println(val[4],DEC);
     Serial.print(id);
     Serial.println(val[5],DEC);
+#endif
   }
 
 };

@@ -1,6 +1,10 @@
 #ifndef __OLCB_VIRTUAL_NODE_H__
 #define __OLCB_VIRTUAL_NODE_H__
 
+#if defined(__AVR__)
+#include <stdlib.h>
+#endif
+#include <string.h>
 #include "OLCB_NodeID.h"
 #include "OLCB_Buffer.h"
 #include "OLCB_Link.h"

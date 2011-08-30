@@ -31,7 +31,7 @@ void Locomotive::reset(void)
   speed = 0;
   direction = 1;
   packetScheduler.setSpeed(getDCCAddress(), 1);
-  ((OLCB_CAN_Link*)_link)->sendAMR(NID);
+  ((OLCB_CAN_Link*)_link)->sendAMR(NID); //TODO Need a better way to do this!! perhaps a "removeVNode"?
   NID->set(0,0,0,0,0,0); //reset our NID, as it is no longer valid. We assume that our NID was malloc'd by setNID, and is not pointing at the links's NID! A decent assumption, but needs to be stated.
   throttle.set(0,0,0,0,0,0);
   _link->removeHandler(this);
@@ -52,27 +52,27 @@ void Locomotive::update(void)
 
 bool Locomotive::processDatagram(void)
 {
-//  Serial.println("Locomotive Got a datagram!");
+  //  Serial.println("Locomotive Got a datagram!");
   if(_rxDatagramBuffer->data[0] == DATAGRAM_MOTIVE) //is this a datagram for loco control?
   {
-//    Serial.println("Got a motive datagram!");
+  //  Serial.println("Got a motive datagram!");
     switch(_rxDatagramBuffer->data[1])
     {
     case DATAGRAM_MOTIVE_ATTACH:
-//      Serial.println("Request attach!");
+//      //  Serial.println("Request attach!");
       return attachDatagram();
     case DATAGRAM_MOTIVE_RELEASE:
-//      Serial.println("Request release!");
+//      //  Serial.println("Request release!");
       return releaseDatagram();
     case DATAGRAM_MOTIVE_SETSPEED:
-  //    Serial.println("Request set speed!");
+    //  Serial.println("Request set speed!");
       return setSpeedDatagram();
     case DATAGRAM_MOTIVE_SETFUNCTION:
-  //    Serial.println("Request set function!");
+    //  Serial.println("Request set function!");
       return setFunctionDatagram();
     }
   }
-//  Serial.println("Datagram not handleable by me");
+  //  Serial.println("Datagram not handleable by me");
   return false;
 }
 
@@ -84,14 +84,14 @@ void Locomotive::datagramResult(bool accepted, uint16_t errorcode)
   {
     if(accepted)
     {
-  //    Serial.println("Attached request ack'd");
+    //  Serial.println("Attached request ack'd");
       state = LOCOMOTIVE_INITIAL;
 //      available = false;
     }
     else //the ATTACHED datagram was NAK'd? ReallY? reset.
     {
-//      Serial.print("Attached request NOT ack'd, resetting. reason: ");
-//      Serial.println(errorcode, HEX);
+//      //  Serial.print("Attached request NOT ack'd, resetting. reason: ");
+//      //  Serial.println(errorcode, HEX);
       reset();
     }
   }
@@ -100,13 +100,13 @@ void Locomotive::datagramResult(bool accepted, uint16_t errorcode)
     if(accepted)
     {
        //release!
- //      Serial.println("Released ack'd");
+ //      //  Serial.println("Released ack'd");
        reset(); //change nothing else!
     }
     else
     {
-//       Serial.print("Released not ack'd!? reason: "); //not even sure what to do in this case. Release anyway?!
-//       Serial.println(errorcode, HEX);
+//       //  Serial.print("Released not ack'd!? reason: "); //not even sure what to do in this case. Release anyway?!
+//       //  Serial.println(errorcode, HEX);
        //state = LOCOMOTIVE_INITIAL; //I guess?
        reset(); //not sure this is correct behavior. TODO
     }
@@ -115,7 +115,7 @@ void Locomotive::datagramResult(bool accepted, uint16_t errorcode)
 
 bool Locomotive::attachDatagram(void)
 {
-//  Serial.println("Got an attach datagram");
+  //  Serial.println("Got an attach datagram");
   OLCB_Datagram d;
   d.destination.copy(&(_rxDatagramBuffer->source));
   d.length = 2;
@@ -124,7 +124,7 @@ bool Locomotive::attachDatagram(void)
   if(available || _rxDatagramBuffer->source == throttle) //if available, or if coming from an already-attached throttle (perhaps it rebooted?)
   {
     available = false; //just so no one tries to mess with us!
-//    Serial.println("Preparing to attach...");
+  //  Serial.println("Preparing to attach...");
     throttle.copy(&(_rxDatagramBuffer->source)); //really shouldn't do this until the attached datagram is ACKd
     d.data[1] = DATAGRAM_MOTIVE_ATTACHED;
     state = LOCOMOTIVE_ATTACHING; //have to catch the ACK to complete the attachement.
@@ -142,7 +142,7 @@ bool Locomotive::releaseDatagram(void)
 {
   if(!available && _rxDatagramBuffer->source == throttle)
   {
-//    Serial.println("  sending released datagram!");
+  //  Serial.println("  sending released datagram!");
     OLCB_Datagram d;
     d.destination.copy(&(_rxDatagramBuffer->source));
     d.length = 2;
@@ -152,7 +152,7 @@ bool Locomotive::releaseDatagram(void)
     state = LOCOMOTIVE_RELEASING;
     return true;
   }
-  //Serial.println("  not attached!");
+    //  Serial.println("  not attached!");
   return false; //what you talkin' 'bout, Willis?
 }
 
@@ -161,7 +161,7 @@ bool Locomotive::setSpeedDatagram(void)
   //TODO CHECK DATAGRAM LENGTH!!
   if(!available && _rxDatagramBuffer->source == throttle)
   {
-//    Serial.println("  setting speed!");
+  //  Serial.println("  setting speed!");
     //Speed in data[3], and direction in data[2].
     speed = map(_rxDatagramBuffer->data[3], 0, 100, 1, 127);
     if(_rxDatagramBuffer->data[2] == 1)
@@ -171,7 +171,7 @@ bool Locomotive::setSpeedDatagram(void)
     packetScheduler.setSpeed128(getDCCAddress(), speed*direction);
     return true;
   }
-//  Serial.println("  not attached!");
+  //  Serial.println("  not attached!");
   return false;
 }
 
@@ -180,21 +180,21 @@ bool Locomotive::setFunctionDatagram(void)
   //TODO CHECK DATAGRAM LENGTH!!
   if(!available && _rxDatagramBuffer->source == throttle)
   {
-//    Serial.print("Setting function ");
-//    Serial.println(_rxDatagramBuffer->data[2]-1,DEC);
-//    Serial.print("to ");
-//    Serial.println(_rxDatagramBuffer->data[3],DEC);
-//    Serial.print("  setting functions to ");
+  //  Serial.print("Setting function ");
+  //  Serial.println(_rxDatagramBuffer->data[2]-1,DEC);
+  //  Serial.print("to ");
+  //  Serial.println(_rxDatagramBuffer->data[3],DEC);
+  //  Serial.print("  setting functions to ");
     //function no. in data[2] and on/off in data[3]
     if(_rxDatagramBuffer->data[3]) //function on
       functions |= (1<<(_rxDatagramBuffer->data[2]-1));
     else //function off
     functions &= ~(1<<(_rxDatagramBuffer->data[2]-1));
-//    Serial.println(functions, BIN);
+  //  Serial.println(functions, BIN);
     packetScheduler.setFunctions(getDCCAddress(), functions);
     return true;
   }
-  //Serial.println("  not attached!");
+    //  Serial.println("  not attached!");
   return false;
 }
 
@@ -205,15 +205,15 @@ uint16_t Locomotive::getDCCAddress(void)
 
 //bool Locomotive::verifyNID(OLCB_NodeID *nid)
 //{
-//   Serial.println("Is this verify request for me?");
+//   //  Serial.println("Is this verify request for me?");
 //   if(OLCB_Datagram_Handler::verifyNID(nid))
 //   {
-//      Serial.println("Yes! Sending Verified!");
+//      //  Serial.println("Yes! Sending Verified!");
 //      return true;
 //   }
 //   else
 //   {
-//     Serial.println("No. Passing it on.");
+//     //  Serial.println("No. Passing it on.");
 //     return false;
 //   }
 //   return false;

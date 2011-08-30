@@ -1,7 +1,5 @@
-#include <WProgram.h>
-//Code taken from LinkControl.cpp
-
 #include "OLCB_CAN_Link.h"
+//Code taken from LinkControl.cpp
 
 
 //////Initialization routine
@@ -380,4 +378,9 @@ bool OLCB_CAN_Link::sendAMR(OLCB_NodeID *nid)
   txBuffer.setAMR(nid->alias);
   while(!can_send_message(&txBuffer));
   return true;
+}
+
+bool OLCB_CAN_Link::addVNode(OLCB_NodeID *NID)
+{
+  return _aliasHelper.allocateAlias(NID); //TODO This can sometimes fail!
 }
