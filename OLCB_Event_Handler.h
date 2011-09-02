@@ -47,6 +47,9 @@ public:
     /* Protocol level interactions for every kind of virtual node */
     bool handleFrame(OLCB_Buffer *buffer);
 
+    /* I don't understand what this method does, so I just copied it directly */
+    void newEvent(int index, bool p, bool c);
+
 
 protected:
     OLCB_Event *_events; //an array of events

@@ -174,7 +174,7 @@ class OLCB_CAN_Link : public OLCB_Link
   //friend class OLCB_CAN_Alias_Helper;
  //protected:
   
- private:
+ //private:
   //This method would not only send the current txbuffer over CAN, but would distribute the message locally among vnodes as well.
 //TODO!!  bool sendTXBuffer(void);
 

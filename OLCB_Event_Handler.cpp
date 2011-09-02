@@ -251,6 +251,15 @@ bool OLCB_Event_Handler::handleLearnEvent(OLCB_Event *event)
     return save;
 }
 
+void OLCB_Event_Handler::newEvent(int index, bool p, bool c)
+{
+  _events[index].flags |= IDENT_FLAG;
+  _sendEvent = min(_sendEvent, index);
+  if (p) _events[index].flags |= OLCB_Event::CAN_PRODUCE_FLAG;
+  if (c) _events[index].flags |= OLCB_Event::CAN_CONSUME_FLAG;
+}
+
+
 bool OLCB_Event_Handler::store(void)
 {
     return false; //false for not saved!

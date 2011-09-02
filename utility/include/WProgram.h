@@ -20,8 +20,8 @@ uint32_t millis(void);
 
 void delay(uint32_t);
 
-// #define HIGH 0x1
-// #define LOW  0x0
+#define HIGH 0x1
+#define LOW  0x0
 
 // #define INPUT 0x0
 // #define OUTPUT 0x1
