@@ -380,6 +380,44 @@ bool OLCB_CAN_Link::sendAMR(OLCB_NodeID *nid)
   return true;
 }
 
+bool OLCB_CAN_Link::sendEvent(OLCB_Event *event)
+{
+    if(!can_check_free_buffer())
+        return false;
+    txBuffer.setPCEventReport(event);
+    while(!can_send_message(&txBuffer));
+    return true;
+}
+
+bool OLCB_CAN_Link::sendConsumerIdentified(OLCB_Event *event)
+{
+    if(!can_check_free_buffer())
+        return false;
+    txBuffer.setConsumerIdentified(event);
+    while(!can_send_message(&txBuffer)); //TODO make a new method for can_send_message that also repeats it back to the link!
+    return true;
+}
+
+bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
+{
+    if(!can_check_free_buffer())
+        return false;
+    txBuffer.setLearnEvent(event);
+    while(!can_send_message(&txBuffer)); //TODO make a new method for can_send_message that also repeats it back to the link!
+    return true;
+}
+
+bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
+{
+    if(!can_check_free_buffer())
+        return false;
+    txBuffer.setProducerIdentified(event);
+    while(!can_send_message(&txBuffer)); //TODO make a new method for can_send_message that also repeats it back to the link!
+    return true;
+}
+
+
+
 bool OLCB_CAN_Link::addVNode(OLCB_NodeID *NID)
 {
   return _aliasHelper.allocateAlias(NID); //TODO This can sometimes fail!

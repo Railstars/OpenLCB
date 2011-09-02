@@ -152,22 +152,21 @@ class OLCB_CAN_Link : public OLCB_Link
   
   bool handleTransportLevel(void);
   virtual void update(void);
-    
-  bool sendEvent(OLCB_Event *event) {return false;}
   
   uint8_t sendDatagramFragment(OLCB_Datagram *datagram, uint8_t start);
   bool ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest);
   bool nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reason);
   
+  //TODO This one needs implementation!
   bool sendStream(OLCB_Stream *stream) {return false;}
   //Not sure that this is how streams should work at all!
   
   bool sendVerifiedNID(OLCB_NodeID *nid);
   
-  //TODO!!
-  bool sendConsumerIdentified(OLCB_Event *event) {return false;}
-  bool sendLearnEvent(OLCB_Event *event) {return false;}
-  bool sendProducerIdentified(OLCB_Event *event) {return false;}
+  bool sendEvent(OLCB_Event *event);
+  bool sendConsumerIdentified(OLCB_Event *event);
+  bool sendLearnEvent(OLCB_Event *event);
+  bool sendProducerIdentified(OLCB_Event *event);
 
 
   bool addVNode(OLCB_NodeID *NID);
@@ -175,7 +174,10 @@ class OLCB_CAN_Link : public OLCB_Link
   //friend class OLCB_CAN_Alias_Helper;
  //protected:
   
-// private:
+ private:
+  //This method would not only send the current txbuffer over CAN, but would distribute the message locally among vnodes as well.
+//TODO!!  bool sendTXBuffer(void);
+
   //OLCB_CAN_Buffer txBuffer, rxBuffer;
   OLCB_Buffer txBuffer, rxBuffer;
   OLCB_CAN_Alias_Helper _aliasHelper;
