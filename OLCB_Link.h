@@ -1,8 +1,8 @@
 #ifndef __OLCB_LINK_H__
 #define __OLCB_LINK_H__
 
-#include "can.h"
 #include <stdint.h>
+#include "can.h"
 #include "OLCB_Event.h"
 #include "OLCB_Virtual_Node.h"
 #include "OLCB_Datagram.h"
@@ -35,6 +35,12 @@ class OLCB_Link
   virtual bool sendStream(OLCB_Stream *stream) {return true;}
   //Not sure that this is how streams should work at all!
   
+  //TODO!!
+  virtual bool sendConsumerIdentified(OLCB_Event *event) {return false;}
+  virtual bool sendLearnEvent(OLCB_Event *event) {return false;}
+  virtual bool sendProducerIdentified(OLCB_Event *event) {return false;}
+
+
   
   OLCB_NodeID* getNodeID(void) {return _nodeID;}
   

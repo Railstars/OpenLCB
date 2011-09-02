@@ -32,11 +32,7 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
   
   virtual bool verifyNID(OLCB_NodeID *nid)
   {
-    if((*nid) == (*NID))
-    {
-      return true;
-    }
-    return false;
+    return OLCB_Virtual_Node::verifyNID(nid);
   }
   
   virtual bool handleFrame(OLCB_Buffer *frame);

@@ -25,9 +25,7 @@ This file is part of ThrottleX2011.
 
 #include <DCCPacketScheduler.h>
 
-#include <OLCB_Datagram_Handler.h>
-#include <OLCB_NodeID.h>
-#include <OLCB_CAN_Link.h>
+#include <OpenLCB.h>
 
 #define LOCOMOTIVE_INITIAL 0
 #define LOCOMOTIVE_ATTACHING 1

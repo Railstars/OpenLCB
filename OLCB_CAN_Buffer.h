@@ -2,9 +2,9 @@
 #define __OLCB_CAN_BUFFER_H__
 
 #include <string.h>
-#include "OLCB_NodeID.h"
-#include "OLCB_EventID.h"
 #include "can.h"
+#include "OLCB_NodeID.h"
+#include "OLCB_Event.h"
 
 /**
  * OpenLCB CAN MTI format (3 bits)
@@ -138,13 +138,13 @@
   void setInitializationComplete(OLCB_NodeID* nid);
   bool isInitializationComplete();
 
-  void setPCEventReport(OLCB_EventID* eid);
+  void setPCEventReport(OLCB_Event* eid);
   bool isPCEventReport();
   
-  void setLearnEvent(OLCB_EventID* eid);
+  void setLearnEvent(OLCB_Event* eid);
   bool isLearnEvent();
   
-  void getEventID(OLCB_EventID* evt);
+  void getEventID(OLCB_Event* evt);
   void getNodeID(OLCB_NodeID* nid);
   
   bool isVerifyNID();
@@ -155,17 +155,17 @@
 
   bool isIdentifyConsumers();
   
-  void setConsumerIdentified(OLCB_EventID* eid);
+  void setConsumerIdentified(OLCB_Event* eid);
   
-  // Mask uses an OLCB_EventID data structure; 1 bit means mask out when routing
-  void setConsumerIdentifyRange(OLCB_EventID* eid, OLCB_EventID* mask);
+  // Mask uses an OLCB_Event data structure; 1 bit means mask out when routing
+  void setConsumerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);
 
   bool isIdentifyProducers();
 
-  void setProducerIdentified(OLCB_EventID* eid);
+  void setProducerIdentified(OLCB_Event* eid);
 
-  // Mask uses an OLCB_EventID data structure; 1 bit means mask out when routing
-  void setProducerIdentifyRange(OLCB_EventID* eid, OLCB_EventID* mask);
+  // Mask uses an OLCB_Event data structure; 1 bit means mask out when routing
+  void setProducerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);
 
   bool isIdentifyEvents();
 
@@ -184,7 +184,7 @@
 //  unsigned int nodeAlias;   // Initialization complete sets, all later use
 
   // service routine to copy content (0-7) to a previously-allocated Eid
-  void loadFromEid(OLCB_EventID* eid);
+  void loadFromEid(OLCB_Event* eid);
   
   //TO BE MADE USE OF LATER. belong in OLCB_CAN_Buffer.
   OLCB_NodeID _source;

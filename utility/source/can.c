@@ -40,6 +40,10 @@ void can_copy_buf_to_message(tCAN *msg);
  * param[in]    none
  * @return      none
  **********************************************************************/
+//TODO put these somewhere else!
+#define RxInt   0
+#define TxInt   1
+#define ErrInt  2
 
     void CAN_IRQHandler()
     {
@@ -51,8 +55,9 @@ void can_copy_buf_to_message(tCAN *msg);
         //IntStatus = CAN_IntGetStatus(CAN_DEV);
         myIntStatus = CAN_GetCTRLStatus(CAN_DEV, CANCTRL_INT_CAP);
         //check receive buffer status
-        if((myIntStatus>>0)&0x01)
+        if( myIntStatus & (1<<RxInt) ) //if a message was received
         {
+            //TODO blink LED here!
             // a message was received successfully
             #if CAN_RX_BUFFER_SIZE > 0
             tCAN *buf = can_buffer_get_enqueue_ptr(&can_rx_buffer);
@@ -77,6 +82,10 @@ void can_copy_buf_to_message(tCAN *msg);
 
             #endif
 
+        }
+        else if( myIntStatus & (1<<ErrInt) ) //if an error trigged the interrupt...
+        {
+            //TODO turn LED on solid here.
         }
     }
 
@@ -240,7 +249,6 @@ bool can_check_message(void)
 }
 
 
-
 //
 // Checks if there is any waiting message in the registers or buffer
 //
@@ -261,6 +269,25 @@ uint8_t can_get_buffered_message(tCAN *msg)
     return 0xff;
 }
 
+
+uint8_t can_get_message(tCAN *msg)
+{
+#if CAN_RX_BUFFER_SIZE == 0
+    if(_messages_waiting)
+    {
+        //TODO copy message into *msg
+        can_copy_buf_to_message(msg);
+        --_messages_waiting;
+        return 0xff;
+    }
+    else
+    {
+        return 0;
+    }
+#else
+    return can_get_buffered_message(msg);
+#endif
+}
 
 // ----------------------------------------------------------------------------
 

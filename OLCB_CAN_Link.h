@@ -2,6 +2,7 @@
 #define __OLCB_CAN_LINK_H__
 
 #include <stdint.h>
+#include "can.h"
 #include "WProgram.h"
 #include "OLCB_Link.h"
 #include "OLCB_CAN_Buffer.h"
@@ -163,6 +164,12 @@ class OLCB_CAN_Link : public OLCB_Link
   
   bool sendVerifiedNID(OLCB_NodeID *nid);
   
+  //TODO!!
+  bool sendConsumerIdentified(OLCB_Event *event) {return false;}
+  bool sendLearnEvent(OLCB_Event *event) {return false;}
+  bool sendProducerIdentified(OLCB_Event *event) {return false;}
+
+
   bool addVNode(OLCB_NodeID *NID);
   
   //friend class OLCB_CAN_Alias_Helper;

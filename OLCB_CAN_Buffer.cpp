@@ -159,7 +159,7 @@
   
   // start of OpenLCB messages
     
-  void OLCB_CAN_Buffer::setPCEventReport(OLCB_EventID* eid) {
+  void OLCB_CAN_Buffer::setPCEventReport(OLCB_Event* eid) {
 //    init(nodeAlias);
     setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI,MTI_PC_EVENT_REPORT);
     length=8;
@@ -170,7 +170,7 @@
       return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_PC_EVENT_REPORT);
   }
 
-  void OLCB_CAN_Buffer::setLearnEvent(OLCB_EventID* eid) {
+  void OLCB_CAN_Buffer::setLearnEvent(OLCB_Event* eid) {
 //    init(nodeAlias);
     setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI,MTI_LEARN_EVENT);
     length=8;
@@ -200,7 +200,7 @@
       return isOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI, MTI_INITIALIZATION_COMPLETE);
   }
   
-  void OLCB_CAN_Buffer::getEventID(OLCB_EventID* evt) {
+  void OLCB_CAN_Buffer::getEventID(OLCB_Event* evt) {
     memcpy(evt->val, data, 8);
     //evt->val[0] = data[0];
     //evt->val[1] = data[1];
@@ -288,14 +288,14 @@
       return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_CONSUMERS);
   }
 
-  void OLCB_CAN_Buffer::setConsumerIdentified(OLCB_EventID* eid) {
+  void OLCB_CAN_Buffer::setConsumerIdentified(OLCB_Event* eid) {
 //    init(nodeAlias);
     setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_CONSUMER_IDENTIFIED);
     length=8;
     loadFromEid(eid);
   }
 
-  void OLCB_CAN_Buffer::setConsumerIdentifyRange(OLCB_EventID* eid, OLCB_EventID* mask) {
+  void OLCB_CAN_Buffer::setConsumerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask) {
     // does send a message, but not complete yet - RGJ 2009-06-14
 //    init(nodeAlias);
     setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_IDENTIFY_CONSUMERS_RANGE);
@@ -307,14 +307,14 @@
       return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_PRODUCERS);
   }
 
-  void OLCB_CAN_Buffer::setProducerIdentified(OLCB_EventID* eid) {
+  void OLCB_CAN_Buffer::setProducerIdentified(OLCB_Event* eid) {
 //    init(nodeAlias);
     setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_PRODUCER_IDENTIFIED);
     length=8;
     loadFromEid(eid);
   }
 
-  void OLCB_CAN_Buffer::setProducerIdentifyRange(OLCB_EventID* eid, OLCB_EventID* mask) {
+  void OLCB_CAN_Buffer::setProducerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask) {
     // does send a message, but not complete yet - RGJ 2009-06-14
 //    init(nodeAlias);
     setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_IDENTIFY_PRODUCERS_RANGE);
@@ -326,7 +326,7 @@
       return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_EVENTS);
   }
 
-  void OLCB_CAN_Buffer::loadFromEid(OLCB_EventID* eid) {
+  void OLCB_CAN_Buffer::loadFromEid(OLCB_Event* eid) {
     memcpy(data, eid->val, 8);
     //data[0] = eid->val[0];
     //data[1] = eid->val[1];
