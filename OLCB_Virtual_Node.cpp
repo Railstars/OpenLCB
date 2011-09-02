@@ -1,5 +1,11 @@
 #include "OLCB_Virtual_Node.h"
 
+void OLCB_Virtual_Node::update(void)
+{
+    if(!_initialized)
+        _initialized = _link->addVNode(NID);
+}
+
 
 void OLCB_Virtual_Node::setNID(OLCB_NodeID *newNID)
 {
@@ -13,6 +19,10 @@ void OLCB_Virtual_Node::setNID(OLCB_NodeID *newNID)
 #endif
   }
   memcpy(NID,newNID, sizeof(OLCB_NodeID));
+  if(_link)
+  {
+      _initialized = _link->addVNode(NID);
+  }
 }
 
 //this really should only be called once.

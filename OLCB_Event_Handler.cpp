@@ -27,6 +27,8 @@ void OLCB_Event_Handler::init(void)
 void OLCB_Event_Handler::update(void) //this method should be overridden to detect conditions for the production of events
 {
     OLCB_Virtual_Node::update();
+    if(!_initialized)
+        return;
 
     // see in any replies are waiting to send
     while (_sendEvent < _numEvents)

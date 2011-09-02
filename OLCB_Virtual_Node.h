@@ -14,12 +14,12 @@ class OLCB_Link;
 class OLCB_Virtual_Node
 {
  public:
-  OLCB_Virtual_Node() : NID(0), _link(0), next(0)
+  OLCB_Virtual_Node() : NID(0), _link(0), next(0), _initialized(false)
     {return;}
 
   virtual void init(void) {return;}
 
-  virtual void update(void) {return;}
+  virtual void update(void);
   virtual bool handleFrame(OLCB_Buffer *buffer) {return false;}  
   virtual bool verifyNID(OLCB_NodeID *nid)
   {
@@ -38,6 +38,7 @@ class OLCB_Virtual_Node
  protected:
   OLCB_Link *_link;
   uint16_t _sendEvent;
+  bool _initialized;
 };
 
 //class OLCB_VirtualNode : protected OLCP_Handler
