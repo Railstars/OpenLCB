@@ -172,7 +172,8 @@ bool OLCB_Event_Handler::handleIdentifyEvents(OLCB_NodeID *nodeid)
 bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
 {
     bool retval = false;
-    uint16_t index;
+    uint16_t index = 0;
+    event->print();
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
         if (_events[index].flags & OLCB_Event::CAN_CONSUME_FLAG)
@@ -184,7 +185,10 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
             }
         }
         ++index;
-        if (index>=_numEvents) break;
+        if (index>=_numEvents)
+        {
+            break;
+        }
     }
     return retval;
 }

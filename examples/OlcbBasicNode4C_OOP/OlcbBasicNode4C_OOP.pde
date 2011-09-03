@@ -18,7 +18,7 @@
 
 //==============================================================
 // OlcbBasicNode_OOP
-// A prototype of a basic 4-Producer OpenLCB board
+// A prototype of a basic 4-Consumer OpenLCB board
 // This implements 4 buttons and generates 8 fixed events
 //
 // D.E. Goodman 2011
@@ -27,22 +27,23 @@
 // and examples by Alex Shepherd and David Harris
 //==============================================================
 
-#define NID 2,1,13,0,0,1 // This nodes ID (DIY space)
+#define NID 2,1,13,0,0,2 // This nodes ID (DIY space)
 OLCB_NodeID nodeid(NID); // Create the node structure with NID
 
-// PC Events this node produces
-// We define two events for each button:
-// one for when the button is depressed, and
-// another for when it is released
+// Define the events that this node uses.
+// We define two events for each LED,
+// one for turning it on,
+// and one for turning it off
+#define producerNID 2,1,13,0,0,1
 OLCB_Event events[] = {
-        OLCB_Event(NID,0,1), // Event for Button14 pressed
-        OLCB_Event(NID,0,2), // " " " released
-        OLCB_Event(NID,0,3), // Event for Button15 pressed
-        OLCB_Event(NID,0,4), // ...
-        OLCB_Event(NID,0,5),
-        OLCB_Event(NID,0,6),
-        OLCB_Event(NID,0,7),
-        OLCB_Event(NID,0,8), // Event for Button17 pressed
+        OLCB_Event(producerNID,0,1), // Event to turn LED1 on
+        OLCB_Event(producerNID,0,2), // " " " off
+        OLCB_Event(producerNID,0,3), // Event to turn LED2 on
+        OLCB_Event(producerNID,0,4), // " " " off
+        OLCB_Event(producerNID,0,5), // ...
+        OLCB_Event(producerNID,0,6),
+        OLCB_Event(producerNID,0,7),
+        OLCB_Event(producerNID,0,8), // Event to turn LED4 off
 };
 int eventNum = 8;
 
@@ -61,7 +62,6 @@ class MyEventHandler: public OLCB_Event_Handler
 {
 public:
     ButtonLed* buttons[8];
-    bool states[4];
     void init(void)
     {
         OLCB_Event_Handler::init();
@@ -69,47 +69,40 @@ public:
         buttons[2] = buttons[3] = &p13;
         buttons[4] = buttons[5] = &p14;
         buttons[6] = buttons[7] = &p15;
-
-        states[0] = states[1] = states[2] = states[3] = false;
     }
-    void update(void)
+
+    bool consume(OLCB_Event *event)
     {
-        // called from loop(), this looks at pins and
-        // and decides which events to fire
-        // with pce.produce(i);
-        // The first event of each pair is sent on button down,
-        // and second on button up.
-        for (int i = 0; i<eventNum/2; i++) { // for each button and event-pair
-            if (states[i] != buttons[i*2]->state) { // . did its state change?
-                states[i] = buttons[i*2]->state; // .. if so, remember it and
-                //Serial.print("button "); Serial.println(i);
-                if (states[i]) { // .. if the new state is down
-                    produce(&_events[i*2]); // ... send the first event of the pair
-                } else { // .. else
-                    produce(&_events[i*2+1]); // .., send the second event
-                }
-            }
-        }
+      // Link received PC events to specific actions of this node
+      // This routine is aautomatically called if an event is received that
+      // matches one of the node's events
+      // invoked when an event is consumed
+      // index indicates which event from the events array.
+      int index = event->findIndexInArray(_events, _numEvents);
+      if(index == -1)
+          return false;
+      Serial.print ("Consuming ");
+      Serial.println(index, DEC);
+      buttons[index]->on(index&0x1 ? 0x0L : ~0x0L ); // turn odd events off, and even events on
+      return true;
     }
 };
 
 MyEventHandler pce; // create the producer/condumer data structure
 
-// Link the button presses (triggers) to PC events
-bool states[] = {false, false, false, false};
-
-
 // =============== Setup ===================
 
 void setup()
 {
+    Serial.begin(115200);
+    Serial.println("4C_OOP");
     link.initialize();
     pce.setNID(&nodeid);
     pce.setLink(&link);
     pce.loadEvents(events, 8);
     pce.init();
     for (int i=0; i<eventNum; i++) {
-        pce.newEvent(i,true,false); // produce, consume
+        pce.newEvent(i,false,true); // produce, consume
     }
 }
 
@@ -117,13 +110,13 @@ void setup()
 
 void loop()
 {
-        // OpenLCB statndard processing:
-        link.update();
-        // read the buttons (implements debouncing, etc.)
-        p12.process();
-        p13.process();
-        p14.process();
-        p15.process();
+    // OpenLCB statndard processing:
+    link.update();
+    // read the buttons (implements debouncing, etc.)
+    p12.process();
+    p13.process();
+    p14.process();
+    p15.process();
 }
 
 // ---------------------------------------------------

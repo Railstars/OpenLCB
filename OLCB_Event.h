@@ -2,6 +2,7 @@
 #define __OLCB_EVENT_H__
 
 #include <stdint.h>
+#include "WProgram.h"
 
 class OLCB_Event {
   public: 
@@ -34,7 +35,8 @@ class OLCB_Event {
   {
     return  (val[0]==other.val[0])&&(val[1]==other.val[1])
           &&(val[2]==other.val[2])&&(val[3]==other.val[3])
-          &&(val[4]==other.val[4])&&(val[5]==other.val[5]);
+          &&(val[4]==other.val[4])&&(val[5]==other.val[5])
+          &&(val[6]==other.val[6])&&(val[7]==other.val[7]);
   }
   
   bool operator!=(const OLCB_Event &other) const
@@ -60,12 +62,36 @@ class OLCB_Event {
   int findIndexInArray(OLCB_Event* array, int len, int index)
   {
       if(index >= len) return -1;
-      for (int i = index; i<len; i++) {
-                if (*this == *(array+i)) return i;
-            }
-            return -1;
+      for (int i = index; i<len; i++)
+      {
+          if (*this == *(array+i)) return i;
+      }
+      return -1;
   }
   
+  void print(void)
+  {
+#if defined(__AVR__) & defined(OLCB_DEBUG)
+    char id[] = "eid:   ";
+    Serial.print(id);
+    Serial.println(val[0],DEC);
+    Serial.print(id);
+    Serial.println(val[1],DEC);
+    Serial.print(id);
+    Serial.println(val[2],DEC);
+    Serial.print(id);
+    Serial.println(val[3],DEC);
+    Serial.print(id);
+    Serial.println(val[4],DEC);
+    Serial.print(id);
+    Serial.println(val[5],DEC);
+    Serial.print(id);
+    Serial.println(val[6],DEC);
+    Serial.print(id);
+    Serial.println(val[7],DEC);
+#endif
+  }
+
   // bit mask local flags
   int flags;
 
