@@ -32,3 +32,6 @@ This software should be considered a developers' preview, and is nothing like fe
  * Memory hoggish. Lots of opportunities to condense memory usage.
  * Inconsistent use of * and & paradigms for passing parameters by reference. Really? Who cares?
  * Many, many bugs to squash.
+
+BUGS:
+ * Currently, no transport-layer messages (PCER, datagrams, etc) are transmitted between virtual nodes. This is a very large problem, that requires careful attention.
