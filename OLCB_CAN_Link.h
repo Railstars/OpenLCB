@@ -29,6 +29,8 @@
 #define CAN_ALIAS_BUFFER_SIZE   10
 #define RID_TIME_WAIT           500 //ms. Up for debate how long this should be!
 
+#define CAN_BUFFER_SIZE			10 //The value of this constant really depends on how many vnodes there are! It need not ever be larger than the number of vnodes, but it shouldn't be too much smaller, either. If every vnode will always be sending out a packet each loop() cycle, then it must be equal to the number of vnodes.
+
 class OLCB_CAN_Link;
 
 struct private_nodeID_t
@@ -38,10 +40,10 @@ struct private_nodeID_t
     uint32_t lfsr1, lfsr2;
 };
 
-class OLCB_Circular_Buffer
+class OLCB_Alias_Buffer
 {
   public:
-    OLCB_Circular_Buffer() : write(0), read(0), size(0)
+    OLCB_Alias_Buffer() : write(0), read(0), size(0)
     {
     }
     bool isEmpty(void) { return size?false:true; }
@@ -126,13 +128,73 @@ class OLCB_CAN_Alias_Helper
     //methods
     //fields
     OLCB_CAN_Link *_link;
-    OLCB_Circular_Buffer _CID1;
-    OLCB_Circular_Buffer _CID2;
-    OLCB_Circular_Buffer _CID3;
-    OLCB_Circular_Buffer _CID4;
-    OLCB_Circular_Buffer _RID;
+    OLCB_Alias_Buffer _CID1;
+    OLCB_Alias_Buffer _CID2;
+    OLCB_Alias_Buffer _CID3;
+    OLCB_Alias_Buffer _CID4;
+    OLCB_Alias_Buffer _RID;
 };
 /**********************/
+
+/*
+This is a stupid thing to need, but I cannot think of any other way.
+The problem is this: Outgoing CAN messages are often needed by other
+virtual nodes on the same physical node. This buffer is used to hold
+outgoing messages to be repeated back to the virtual nodes. It is a total
+kludge, but I cannot think of any other way of doing it. Part of the
+kludgyness comes from implementing YET ANOTHER circular buffer; if templates
+turn out to be usable on AVR, I will shoot myself for doing this. In the
+meantime, here's another circular buffer.
+*/
+
+class OLCB_CAN_Circular_Buffer
+{
+  public:
+    OLCB_CAN_Circular_Buffer() : write(0), read(0), size(0)
+    {
+    }
+    bool isEmpty(void) { return size?false:true; }
+    bool isFull(void) { return (size==CAN_BUFFER_SIZE)?true:false; }
+    
+    bool push(OLCB_CAN_Buffer *new_node)
+    {
+        if(!isFull())
+        {
+			memcpy(&(buffer[write]), new_node, sizeof(OLCB_CAN_Buffer));
+            write = (write+1)%CAN_BUFFER_SIZE; //which might be the read head!
+            ++size;
+            return true;
+        }
+        return false;
+    }
+
+    bool pop(OLCB_CAN_Buffer *new_node)
+    {
+    	bool retval = peek(new_node);
+        if(retval)
+        {
+            read = (read+1)%CAN_ALIAS_BUFFER_SIZE;
+            --size;
+        }
+        return retval;
+    }
+    
+    bool peek(OLCB_CAN_Buffer *new_node)
+    {
+        if(!isEmpty())
+        {
+        	memcpy(new_node, &(buffer[read]), sizeof(OLCB_CAN_Buffer));
+        	return true;
+        }
+        return false;
+    }
+    
+  private:
+    OLCB_CAN_Buffer buffer[CAN_BUFFER_SIZE] ;
+    uint8_t write;
+    uint8_t read;
+    uint8_t size;
+};
 
 class OLCB_CAN_Link : public OLCB_Link
 {
@@ -176,7 +238,7 @@ class OLCB_CAN_Link : public OLCB_Link
   
  //private:
   //This method would not only send the current txbuffer over CAN, but would distribute the message locally among vnodes as well.
-//TODO!!  bool sendTXBuffer(void);
+  bool sendMessage(OLCB_CAN_Buffer *to_send);
 
   //OLCB_CAN_Buffer txBuffer, rxBuffer;
   OLCB_Buffer txBuffer, rxBuffer;
@@ -210,6 +272,9 @@ class OLCB_CAN_Link : public OLCB_Link
   bool sendNIDVerifyRequest(OLCB_NodeID *nid);
   
   bool sendAMR(OLCB_NodeID *nid);
+  
+  
+  OLCB_CAN_Circular_Buffer repeat_buffer;
   
 };
 

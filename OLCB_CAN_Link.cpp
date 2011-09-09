@@ -49,7 +49,7 @@ bool OLCB_CAN_Link::sendCID(OLCB_NodeID *nodeID, uint8_t i) {
   }
   txBuffer.setCID(i,fragment,nodeID->alias);
 //  Serial.println("Sending CID");
-  while(!can_send_message(&txBuffer));  // wait for queue, but earlier check says will succeed
+  while(!sendMessage(&txBuffer));  // wait for queue, but earlier check says will succeed
   return true;
 }
 
@@ -57,7 +57,7 @@ bool OLCB_CAN_Link::sendRID(OLCB_NodeID* nodeID) {
   if (!can_check_free_buffer()) return false;  // couldn't send just now  if (!isTxBufferFree()) return false;  // couldn't send just now
   txBuffer.setRID(nodeID->alias);
 //  Serial.println("Sending RIM");
-  while(!can_send_message(&txBuffer));  // wait for queue, but earlier check says will succeed
+  while(!sendMessage(&txBuffer));  // wait for queue, but earlier check says will succeed
   return true;
 }
 
@@ -70,7 +70,7 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
 //  _NIDtoNegotiate->print();
 //  Serial.println("==================");
   
-  while(!can_send_message(&txBuffer));    // wait for queue, but earlier check says will succeed
+  while(!sendMessage(&txBuffer));    // wait for queue, but earlier check says will succeed
   return true;
 }
 
@@ -187,15 +187,11 @@ bool OLCB_CAN_Link::handleTransportLevel()
 
 void OLCB_CAN_Link::update(void)
 {
+  //check first for any self-generated messages, and second for messages
+  // coming from the CAN bus
+  if(repeat_buffer.pop(&rxBuffer) || can_get_message(&rxBuffer))
   //check to see if any new messages require handling
-  if(can_get_message(&rxBuffer))
   {
-//    Serial.println("Got a message!");
-//    Serial.println(rxBuffer.id, HEX);
-//    for(int i = 0; i < rxBuffer.length; ++i)
-//      Serial.println(rxBuffer.data[i],HEX);
-//    Serial.println("==================");
-    
     // See if this message is a CAN-level message that we should be handling.
     if(handleTransportLevel())
      //bail early, the packet grabbed isn't for any of the attached handlers to deal with.
@@ -295,7 +291,7 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
 //  Serial.println("Set up datagram buffer to send...");
 //  Serial.println(txBuffer.id,HEX);
 
-  while(!can_send_message(&txBuffer));
+  while(!sendMessage(&txBuffer));
   
   return len;
 }
@@ -325,7 +321,7 @@ bool OLCB_CAN_Link::sendNIDVerifyRequest(OLCB_NodeID *nid)
   sendVerifiedNID(_nodeID);
   txBuffer.init(_nodeID);
   txBuffer.setVerifyNID(nid);
-  while(!can_send_message(&txBuffer));  // wait for queue, but earlier check says will succeed
+  while(!sendMessage(&txBuffer));  // wait for queue, but earlier check says will succeed
   _aliasCacheTimer = millis(); //set the clock going. A request will only be permitted to stand for 1 second.
   return true;
 }
@@ -340,7 +336,7 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
   txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
   txBuffer.data[0] = MTI_DATAGRAM_RCV_OK>>4;
   txBuffer.length = 1;
-  while(!can_send_message(&txBuffer));
+  while(!sendMessage(&txBuffer));
   return true;
 }
 
@@ -356,7 +352,7 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
   txBuffer.data[1] = (reason>>8)&0xFF;
   txBuffer.data[2] = reason&0xFF;
   txBuffer.length = 3;
-  while(!can_send_message(&txBuffer));
+  while(!sendMessage(&txBuffer));
   return true;
 }
 
@@ -366,7 +362,7 @@ bool OLCB_CAN_Link::sendVerifiedNID(OLCB_NodeID *nid)
     return false;
   txBuffer.init(nid);
   txBuffer.setVerifiedNID(nid);
-  while(!can_send_message(&txBuffer));
+  while(!sendMessage(&txBuffer));
   return true;
 }
 
@@ -376,7 +372,7 @@ bool OLCB_CAN_Link::sendAMR(OLCB_NodeID *nid)
     return false;
   txBuffer.init(nid);
   txBuffer.setAMR(nid->alias);
-  while(!can_send_message(&txBuffer));
+  while(!sendMessage(&txBuffer));
   return true;
 }
 
@@ -385,7 +381,7 @@ bool OLCB_CAN_Link::sendEvent(OLCB_Event *event)
     if(!can_check_free_buffer())
         return false;
     txBuffer.setPCEventReport(event);
-    while(!can_send_message(&txBuffer));
+    while(!sendMessage(&txBuffer));
     return true;
 }
 
@@ -394,7 +390,7 @@ bool OLCB_CAN_Link::sendConsumerIdentified(OLCB_Event *event)
     if(!can_check_free_buffer())
         return false;
     txBuffer.setConsumerIdentified(event);
-    while(!can_send_message(&txBuffer)); //TODO make a new method for can_send_message that also repeats it back to the link!
+    while(!sendMessage(&txBuffer)); //TODO make a new method for sendMessage that also repeats it back to the link!
     return true;
 }
 
@@ -403,7 +399,7 @@ bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
     if(!can_check_free_buffer())
         return false;
     txBuffer.setLearnEvent(event);
-    while(!can_send_message(&txBuffer)); //TODO make a new method for can_send_message that also repeats it back to the link!
+    while(!sendMessage(&txBuffer)); //TODO make a new method for sendMessage that also repeats it back to the link!
     return true;
 }
 
@@ -412,7 +408,7 @@ bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
     if(!can_check_free_buffer())
         return false;
     txBuffer.setProducerIdentified(event);
-    while(!can_send_message(&txBuffer)); //TODO make a new method for can_send_message that also repeats it back to the link!
+    while(!sendMessage(&txBuffer)); //TODO make a new method for sendMessage that also repeats it back to the link!
     return true;
 }
 
@@ -421,4 +417,18 @@ bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 bool OLCB_CAN_Link::addVNode(OLCB_NodeID *NID)
 {
   return _aliasHelper.allocateAlias(NID); //TODO This can sometimes fail!
+}
+
+bool OLCB_CAN_Link::sendMessage(OLCB_CAN_Buffer *to_send)
+{
+	if(!can_check_free_buffer())
+	{
+        return false;
+    }
+    if(!repeat_buffer.push(&txBuffer))
+    {
+    	return false;
+    }
+    while(!can_send_message(&txBuffer));
+    return true;
 }
