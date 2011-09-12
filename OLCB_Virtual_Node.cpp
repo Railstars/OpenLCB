@@ -2,8 +2,10 @@
 
 void OLCB_Virtual_Node::update(void)
 {
-    if(!_initialized)
+    if(_link && !_initialized)
+    {
         _initialized = _link->addVNode(NID);
+    }
 }
 
 

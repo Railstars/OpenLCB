@@ -39,23 +39,24 @@ bool LocomotiveFactory::verifyNID(OLCB_NodeID *nid)
   if( (nid->val[0] == 6) && (nid->val[1] == 1) ) //if it's intended for a DCC locomotive, we ought to pay attention!
   {
     //find a slot for it
-  //  Serial.println("LocoFactory: Got a request to create a new loco vnode");
+    // Serial.println("LocoFactory: Got a request to create a new loco vnode");
     for(int i = 0; i < NUM_SLOTS; ++i)
     {
       if(_locos[i].isAvailable()) //an empty slot is found!
       {
-//        //  Serial.print("    Installing in slot ");
-//        //  Serial.println(i,DEC);
-//        //  Serial.println(freeMemory(),DEC);
+        // Serial.print("    Installing in slot ");
+        // Serial.println(i,DEC);
+        //  Serial.println(freeMemory(),DEC);
         _locos[i].setLink(_link);
-//        //  Serial.println("Set the link");
-//        //  Serial.println(freeMemory(),DEC);
+        // Serial.println("Set the link");
+        // Serial.println(freeMemory(),DEC);
         _locos[i].setNID(nid);
-//        //  Serial.println("set the NID");
-//        //  Serial.println(freeMemory(),DEC);
+        // Serial.println("set the NID");
+        nid->print();
+        // Serial.println(freeMemory(),DEC);
         _locos[i].verified = false; //just in case
-//        //  Serial.println(freeMemory(),DEC);
-//        //  Serial.println("Done installing loco");
+        //  Serial.println(freeMemory(),DEC);
+        // Serial.println("Done installing loco");
         return false; //what the what? we're actually not yet ready to send out the verifiedNID packet, as we don't yet have an alias.
         //That's up to the virtual node to do on its own!
       }

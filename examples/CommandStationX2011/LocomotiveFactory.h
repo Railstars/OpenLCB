@@ -28,7 +28,7 @@ This file is part of ThrottleX2011.
 #include "Locomotive.h"
 
 #if defined(__AVR_AT90CAN128__) || defined(__AVR_ATMEGA1280__)
-#define NUM_SLOTS 20
+#define NUM_SLOTS 10
 #else
 #define NUM_SLOTS 5
 #endif

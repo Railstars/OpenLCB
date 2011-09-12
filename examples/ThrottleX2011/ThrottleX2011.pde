@@ -73,6 +73,8 @@ KNOWN BUGS:
 
 ***************************************************************************************/
 
+#define OLCB_DEBUG
+
 #include <OpenLCB.h>
 #include <can.h>
 

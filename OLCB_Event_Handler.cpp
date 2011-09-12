@@ -39,37 +39,24 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
         {
             _events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
             _link->sendProducerIdentified(&_events[_sendEvent]);
-            //buffer.setProducerIdentified(&_events[_sendEvent]);
-            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
             break; // only send one from this loop
         }
         else if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG))
         {
             _events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
             _link->sendConsumerIdentified(&_events[_sendEvent]);
-            //buffer->setConsumerIdentified(&_events[_sendEvent]);
-            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
             break; // only send one from this loop
         }
         else if (_events[_sendEvent].flags & PRODUCE_FLAG)
         {
             _events[_sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag
             produce(&_events[_sendEvent]);
-//            consume(&_events[_sendEvent]); //because we might be consuming it too!
-            //buffer->setPCEventReport(&_events[_sendEvent]);
-            //handlePCEventReport(buffer);
-            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
             break; // only send one from this loop
         }
         else if (_events[_sendEvent].flags & TEACH_FLAG)
         {
             _events[_sendEvent].flags &= ~TEACH_FLAG;    // reset flag
             _link->sendLearnEvent(&_events[_sendEvent]);
-//            handleLearnEvent(&_events[_sendEvent]); //process the LearnEvent just as if we had received it ourself.
-            //******************** TODO NOTICE THAT OTHER VIRTUAL NODES ON THIS NODE WILL NOT RECEIVE THE LEARN EVENT!!!
-            //buffer->setLearnEvent(&_events[_sendEvent]);
-            //handleLearnEvent(buffer);
-            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
             break; // only send one from this loop
         }
         else
@@ -141,7 +128,7 @@ bool OLCB_Event_Handler::handleFrame(OLCB_Buffer *buffer)
         // See if addressed to us
         OLCB_NodeID n;
         buffer->getNodeID(&n);
-        return handleIdentifyEvents(&n);
+        retval = handleIdentifyEvents(&n);
     }
 
     else if(buffer->isLearnEvent())
@@ -173,7 +160,6 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
 {
     bool retval = false;
     uint16_t index = 0;
-    event->print();
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
         if (_events[index].flags & OLCB_Event::CAN_CONSUME_FLAG)

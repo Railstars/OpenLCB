@@ -76,9 +76,10 @@
   void OLCB_CAN_Buffer::setCID(int i, uint16_t testval, uint16_t alias) {
     flags.extended = 1;
     // all bits in header default to 1 except MASK_SRC_ALIAS
-    id = 0x1FFFF000 | (alias & MASK_SRC_ALIAS);
+  	setSourceAlias(alias);
+//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
     setFrameTypeCAN();
-    uint16_t var =  (( (0x7-i) & 7) << 12) | (testval & 0xFFF); 
+    uint16_t var =  (( (0x8-i) & 7) << 12) | (testval & 0xFFF); 
     setVariableField(var);
     length=0;
   }
@@ -90,7 +91,8 @@
   void OLCB_CAN_Buffer::setRID(uint16_t alias) {
     flags.extended = 1;
     // all bits in header default to 1 except MASK_SRC_ALIAS
-    id = 0x1FFFF000 | (alias & MASK_SRC_ALIAS);
+  	setSourceAlias(alias);
+//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
     setFrameTypeCAN();
     setVariableField(RID_VAR_FIELD);
     length=0;
@@ -100,13 +102,15 @@
       return isFrameTypeCAN() && getVariableField() == RID_VAR_FIELD;
   }
   
-  void OLCB_CAN_Buffer::setAMR(uint16_t alias)
+  void OLCB_CAN_Buffer::setAMR(OLCB_NodeID *nid)
   {
-    flags.extended = 1;
-    id = 0x1FFFF000 | (alias & MASK_SRC_ALIAS);
-    setFrameTypeCAN();
-    setVariableField(AMR_VAR_FIELD);
-    length = 0;
+  	flags.extended = 1;
+  	setSourceAlias(nid->alias);
+//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+  	setFrameTypeCAN();
+  	setVariableField(AMR_VAR_FIELD);
+  	length=6;
+    memcpy(data, nid->val, 6);
   }
   
   bool OLCB_CAN_Buffer::isAMR()
@@ -114,6 +118,22 @@
     return isFrameTypeCAN() && getVariableField() == AMR_VAR_FIELD;
   }
 
+//TODO The source alias isn't getting set right here!
+  void OLCB_CAN_Buffer::setAMD(OLCB_NodeID *nid)
+  {
+  	flags.extended = 1;
+  	setSourceAlias(nid->alias);
+//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+  	setFrameTypeCAN();
+  	setVariableField(AMD_VAR_FIELD);
+  	length=6;
+    memcpy(data, nid->val, 6);
+  }
+
+  bool OLCB_CAN_Buffer::isAMD()
+  {
+  	return isFrameTypeCAN() && getVariableField() == AMD_VAR_FIELD;
+  }
 
   // end of CAN-level messages
   

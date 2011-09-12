@@ -56,11 +56,9 @@ KNOWN BUGS:
 
 ***************************************************************************************/
 
-
 //#include <MemoryFree.h>
 
 #define DATAGRAM_LENGTH 5 //5 bytes at most. really.
-#define OLCB_DEBUG
 
 #include <OpenLCB.h>
 
@@ -82,8 +80,8 @@ OLCB_CAN_Link link(&nid);
 
 void setup()
 {
-  //  Serial.begin(115200);
-  //  Serial.println("Hello world!");
+//    Serial.begin(115200);
+//    Serial.println("Hello world!");
 //  delay(50);
   link.initialize();
   factory.setLink((OLCB_Link*)&link);

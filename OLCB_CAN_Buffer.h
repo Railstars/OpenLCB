@@ -46,8 +46,12 @@
 #define MTI_DATAGRAM_RCV_OK             0x4CF
 #define MTI_DATAGRAM_REJECTED           0x4DF
 
+//from CanFrameTransferS
 #define RID_VAR_FIELD 0x0700
+#define AMD_VAR_FIELD 0x0701
+#define AME_VAR_FIELD 0x0702
 #define AMR_VAR_FIELD 0x0703
+
 
 // for definiton, see
 // http://openlcb.sf.net/trunk/documents/can/index.html
@@ -113,8 +117,11 @@
   void setRID(uint16_t alias);
   bool isRID();
   
-  void setAMR(uint16_t alias);
+  void setAMR(OLCB_NodeID *nid);
   bool isAMR(void);
+  
+  void setAMD(OLCB_NodeID *nid);
+  bool isAMD(void);
 
   // end of CAN-level messages
   

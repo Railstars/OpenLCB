@@ -115,7 +115,7 @@ void Locomotive::datagramResult(bool accepted, uint16_t errorcode)
 
 bool Locomotive::attachDatagram(void)
 {
-  //  Serial.println("Got an attach datagram");
+  Serial.println("Got an attach datagram");
   OLCB_Datagram d;
   d.destination.copy(&(_rxDatagramBuffer->source));
   d.length = 2;
@@ -124,7 +124,7 @@ bool Locomotive::attachDatagram(void)
   if(available || _rxDatagramBuffer->source == throttle) //if available, or if coming from an already-attached throttle (perhaps it rebooted?)
   {
     available = false; //just so no one tries to mess with us!
-  //  Serial.println("Preparing to attach...");
+    Serial.println("Preparing to attach...");
     throttle.copy(&(_rxDatagramBuffer->source)); //really shouldn't do this until the attached datagram is ACKd
     d.data[1] = DATAGRAM_MOTIVE_ATTACHED;
     state = LOCOMOTIVE_ATTACHING; //have to catch the ACK to complete the attachement.
@@ -134,6 +134,7 @@ bool Locomotive::attachDatagram(void)
     d.data[1] = DATAGRAM_MOTIVE_ATTACH_DENIED;
     //don't worry about catching the ACK or NAK.
   }
+  Serial.println("Sending attach datagram");
   sendDatagram(&d);
   return true;
 }

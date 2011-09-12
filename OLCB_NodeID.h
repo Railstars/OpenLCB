@@ -3,15 +3,19 @@
 
 #include <stdint.h>
 
+#define OLCB_DEBUG
+#include "WProgram.h"
+
 class OLCB_NodeID {
   public:
   
   uint8_t val[6];
   uint16_t alias; //used by CAN and other buses.
+  bool initialized;
 
   
-  OLCB_NodeID() {
-      alias = 0;
+  OLCB_NodeID() : alias(0), initialized(false)
+  {
       val[0] = 0;
       val[1] = 0;
       val[2] = 0;
@@ -21,8 +25,8 @@ class OLCB_NodeID {
   }
   
   OLCB_NodeID(uint8_t b0, uint8_t b1, uint8_t b2, 
-         uint8_t b3, uint8_t b4, uint8_t b5) {
-      alias = 0;
+         uint8_t b3, uint8_t b4, uint8_t b5) : alias(0), initialized(false)
+  {
       val[0] = b0;
       val[1] = b1;
       val[2] = b2;
@@ -32,8 +36,10 @@ class OLCB_NodeID {
   }
   
   void set(uint8_t b0, uint8_t b1, uint8_t b2, 
-         uint8_t b3, uint8_t b4, uint8_t b5) {
+         uint8_t b3, uint8_t b4, uint8_t b5)
+  {
       alias = 0; //have to reset alias!
+      initialized = false;
       val[0] = b0;
       val[1] = b1;
       val[2] = b2;
@@ -110,7 +116,8 @@ class OLCB_NodeID {
 
   void print(void)
   {
-#if defined(__AVR__) & defined(OLCB_DEBUG)
+// #if defined(__AVR__) & defined(OLCB_DEBUG)
+#if defined(OLCB_DEBUG)
     char id[] = "nid:   ";
     Serial.print("alias: ");
     Serial.println(alias,DEC);
