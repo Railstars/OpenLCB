@@ -1,3 +1,9 @@
+12 September 2011:
+	* Removed a nasty bug where datagram_handlers would never actually send a datagram. Oops!
+	* Totally redid the mechanism for passing output packets among VNodes; previous version was a total memory hog. New version much better, and more elegant too.
+	* Completed the CIR/RID algorithm with a new more robust alias allocation scheme; now catches duplicate alises and acts accordingly. Mechanism is much like before, but uses considerably less memory.
+
+
 17 August 2011:
 	* reworked the forward declarations for some of the circular references. Not entirely satisfied, but it compiles
 	* totally redid the alias allocation scheme. Still need to run checks of incoming CID/RID against aliases in progress, and aliases in progress against themselves.
