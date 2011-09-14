@@ -11,23 +11,13 @@ void OLCB_Link::update(void)//called repeatedly
   }
 }
   
-void OLCB_Link::addHandler(OLCB_Virtual_Node *handler)
+void OLCB_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
-//  Serial.print("OLCB_Link::addHandler: registering handler ");
-//  Serial.println((uint16_t)handler, HEX);
-  handler->next = _handlers;
-  _handlers = handler;
-//  Serial.println("====");
-//  OLCB_Virtual_Node *iter = _handlers;
-//  while(iter != NULL)
-//  {
-//    Serial.println((uint16_t)iter, HEX);
-//    iter = iter->next;
-//  }
-//  Serial.println("====");
+  vnode->next = _handlers;
+  _handlers = vnode;
 }
 
-void OLCB_Link::removeHandler(OLCB_Virtual_Node *handler)
+void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
 {
 //  Serial.println("Removing Handler ");
   if(!_handlers) //nothing to remove!
@@ -47,21 +37,21 @@ void OLCB_Link::removeHandler(OLCB_Virtual_Node *handler)
   
   //Looking for the handler that comes before handler.
 //  iter = _handlers;
-  if(iter == handler)
+  if(iter == vnode)
   {
 //    Serial.println("The first item is the one to remove!");
-    _handlers = handler->next;
+    _handlers = vnode->next;
   }
   else
   {
     while(iter->next != NULL)
    {
-     if(iter->next == handler)
+     if(iter->next == vnode)
      {
 //       Serial.print("Found the one before: ");
 //        Serial.println((uint16_t)iter, HEX);
         //remove it from the list
-       iter->next = handler->next;
+       iter->next = vnode->next;
         break;
       }
      iter = iter->next;

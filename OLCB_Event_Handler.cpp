@@ -9,58 +9,61 @@
 
 #include "OLCB_Event_Handler.h"
 
-OLCB_Event_Handler::OLCB_Event_Handler() : _sendEvent(0), _numEvents(0), _events(0)
-{
-    load(); //load the existing event table from memory;
-}
-
-OLCB_Event_Handler::~OLCB_Event_Handler()
-{
-    store(); //save the existing event table to memory; This will probably never be called.
-}
-
-void OLCB_Event_Handler::init(void)
-{
-    OLCB_Virtual_Node::init();
-}
 
 void OLCB_Event_Handler::update(void) //this method should be overridden to detect conditions for the production of events
 {
-    OLCB_Virtual_Node::update();
-    if(!_initialized)
-        return;
-
-    // see in any replies are waiting to send
+    // see if any replies are waiting to send
     while (_sendEvent < _numEvents)
     {
+    	Serial.print("    i = ");
+        Serial.print(_sendEvent, DEC);
+        Serial.print(" ");
+        Serial.print(_events[_sendEvent].flags, HEX);
+        Serial.print(":  ");
         // OK to send, see if marked for some cause
         // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
         if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG))
         {
-            _events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
-            _link->sendProducerIdentified(&_events[_sendEvent]);
+        	Serial.println("identify producer");
+            if(_link->sendProducerIdentified(&_events[_sendEvent]))
+            {
+            	Serial.println(_events[_sendEvent].flags, HEX);
+            	Serial.println("reset IDENT flag");
+            	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
+            	Serial.println(_events[_sendEvent].flags, HEX);
+            }
+            else
+            {
+            	Serial.println("failed");
+            }
             break; // only send one from this loop
         }
         else if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG))
         {
-            _events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
-            _link->sendConsumerIdentified(&_events[_sendEvent]);
+        	Serial.println("identify consumer");
+            if(_link->sendConsumerIdentified(&_events[_sendEvent]))
+            {
+            	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
+            }
             break; // only send one from this loop
         }
         else if (_events[_sendEvent].flags & PRODUCE_FLAG)
         {
-            _events[_sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag
-            produce(&_events[_sendEvent]);
+	        Serial.println("produce");
+            if(_link->sendPCER(&_events[_sendEvent]))
+         		_events[_sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag   
             break; // only send one from this loop
         }
         else if (_events[_sendEvent].flags & TEACH_FLAG)
         {
-            _events[_sendEvent].flags &= ~TEACH_FLAG;    // reset flag
+			Serial.println("teach");
             _link->sendLearnEvent(&_events[_sendEvent]);
+            	_events[_sendEvent].flags &= ~TEACH_FLAG;    // reset flag
             break; // only send one from this loop
         }
         else
         {
+			Serial.println("skip");
             // just skip
             ++_sendEvent;
         }
@@ -71,18 +74,33 @@ void OLCB_Event_Handler::loadEvents(OLCB_Event* events, uint16_t numEvents)
 {
     _events = events;
     _numEvents = numEvents;
+    Serial.println("loadEvents");
+    for(uint16_t i = 0; i < _numEvents; ++i)
+    {
+    	_events[i].flags = 0;
+    	Serial.print(i, DEC);
+    	Serial.print(" ");
+    	Serial.println(_events[i].flags, HEX);
+    }
 }
 
-bool OLCB_Event_Handler::produce(OLCB_Event *event) //call to produce an event with ID = EID
+bool OLCB_Event_Handler::produce(uint16_t index) //OLCB_Event *event) //call to produce an event with ID = EID
 {
-    if(_link)
-    {
-        return _link->sendEvent(event);
-    }
-    else
-    {
-        return false;
-    }
+	bool retval = false;
+//	int8_t index = 0;
+//	while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
+//    {
+//        // yes, we have to reply with ConsumerIdentified
+        if (_events[index].flags & OLCB_Event::CAN_PRODUCE_FLAG)
+        {
+        	retval = true;
+            _events[index].flags |= PRODUCE_FLAG;
+            _sendEvent = min(_sendEvent, index);
+        }
+//        ++index;
+//        if (index>=_numEvents) break;
+//    }
+    return retval;
 }
 
 //this method should be overridden to handle the consumption of events.
@@ -94,8 +112,9 @@ bool OLCB_Event_Handler::consume(OLCB_Event *event)
 
 
 /* Protocol level interactions for every kind of virtual node */
-bool OLCB_Event_Handler::handleFrame(OLCB_Buffer *buffer)
+bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 {
+	Serial.println("Event handler handling message!");
     bool retval = false;
     //first, check to see if it is an event
     if(buffer->isPCEventReport()) //it's what is colloquially known as an event! Or technically as a Producer-Consumer Event Report (!?)
@@ -159,7 +178,7 @@ bool OLCB_Event_Handler::handleIdentifyEvents(OLCB_NodeID *nodeid)
 bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
 {
     bool retval = false;
-    uint16_t index = 0;
+    int16_t index = 0;
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
         if (_events[index].flags & OLCB_Event::CAN_CONSUME_FLAG)
@@ -182,7 +201,7 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
 bool OLCB_Event_Handler::handleIdentifyProducers(OLCB_Event *event)
 {
     bool retval = false;
-    int index = 0;
+    int16_t index = 0;
     // find producers of event
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
@@ -245,10 +264,19 @@ bool OLCB_Event_Handler::handleLearnEvent(OLCB_Event *event)
 
 void OLCB_Event_Handler::newEvent(int index, bool p, bool c)
 {
+
   _events[index].flags |= IDENT_FLAG;
   _sendEvent = min(_sendEvent, index);
   if (p) _events[index].flags |= OLCB_Event::CAN_PRODUCE_FLAG;
   if (c) _events[index].flags |= OLCB_Event::CAN_CONSUME_FLAG;
+
+
+  Serial.print("new event ");
+      	Serial.print(index, DEC);
+    	Serial.print(" ");
+    	Serial.println(_events[index].flags, HEX);
+
+
 }
 
 

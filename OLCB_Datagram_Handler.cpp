@@ -1,19 +1,5 @@
 #include "OLCB_Datagram_Handler.h"
 
-void OLCB_Datagram_Handler::setLink(OLCB_Link *newLink)
-{
-    OLCB_Virtual_Node::setLink(newLink);
-    _rxDatagramBuffer->destination.copy(NID);
-    _txDatagramBuffer->source.copy(NID);
-}
-
-void OLCB_Datagram_Handler::setNID(OLCB_NodeID *newNID)
-{
-    OLCB_Virtual_Node::setNID(newNID);
-    _rxDatagramBuffer->destination.copy(NID);
-    _txDatagramBuffer->source.copy(NID);
-}
-
 bool OLCB_Datagram_Handler::sendDatagram(OLCB_Datagram *datagram)
 {
     //someone wants to send a datagram! Check to see if our buffer is free, or two seconds have passed
@@ -21,7 +7,6 @@ bool OLCB_Datagram_Handler::sendDatagram(OLCB_Datagram *datagram)
     {
         return false;
     }
-
     _txDatagramBufferFree = false;
     //Copy the datagram to free the original up for other uses.
     memcpy(_txDatagramBuffer,datagram,sizeof(OLCB_Datagram));
@@ -38,7 +23,7 @@ bool OLCB_Datagram_Handler::isDatagramSent(void)
     return(_txDatagramBufferFree);
 }
 
-bool OLCB_Datagram_Handler::handleFrame(OLCB_Buffer *frame)
+bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 {
     //First, make sure we are dealing with a datagram.
     if(!frame->isDatagram())
@@ -157,12 +142,6 @@ bool OLCB_Datagram_Handler::handleFrame(OLCB_Buffer *frame)
 
 void OLCB_Datagram_Handler::update(void)
 {
-    OLCB_Virtual_Node::update();
-    if(!_initialized)  //check to see that we're initialized and ready to go.
-    {
-        return;
-    }
-
     if(_txFlag) //We're in the middle of a transmission
     {
         uint8_t sent = _link->sendDatagramFragment(_txDatagramBuffer, _loc);

@@ -76,8 +76,8 @@ class OLCB_CAN_Alias_Helper
     void initialize(OLCB_CAN_Link *link);
     void checkMessage(OLCB_CAN_Buffer *msg);
     void update(void);
-    bool allocateAlias(OLCB_NodeID* nodeID);
-    bool reAllocateAlias(private_nodeID_t* nodeID);
+    void allocateAlias(OLCB_NodeID* nodeID);
+    void reAllocateAlias(private_nodeID_t* nodeID);
     bool releaseAlias(OLCB_NodeID* nodeID);
   private:
     //methods
@@ -92,7 +92,7 @@ class OLCB_CAN_Alias_Helper
 class OLCB_CAN_Link : public OLCB_Link
 {
  public:
-  OLCB_CAN_Link(OLCB_NodeID *NID) : OLCB_Link(NID), internalMessage(false)
+  OLCB_CAN_Link() : internalMessage(false)
   {
       return;
   }
@@ -114,14 +114,18 @@ class OLCB_CAN_Link : public OLCB_Link
   //Not sure that this is how streams should work at all!
   
   bool sendVerifiedNID(OLCB_NodeID *nid);
+    /*Methods for handling nida caching TODO THESE NEED UPDATING!!*/
+  bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request);
+
   
-  bool sendEvent(OLCB_Event *event);
+  bool sendPCER(OLCB_Event *event);
   bool sendConsumerIdentified(OLCB_Event *event);
   bool sendLearnEvent(OLCB_Event *event);
   bool sendProducerIdentified(OLCB_Event *event);
 
 
-  bool addVNode(OLCB_NodeID *NID);
+  void addVNode(OLCB_Virtual_Node *vnode);
+  void removeVNode(OLCB_Virtual_Node *vnode);
   
   //friend class OLCB_CAN_Alias_Helper;
  //protected:
@@ -159,10 +163,7 @@ class OLCB_CAN_Link : public OLCB_Link
    * false if you didn't.
    */
   bool sendInitializationComplete(OLCB_NodeID* nodeID);
-  
-  /*Methods for handling nida caching TODO THESE NEED UPDATING!!*/
-  bool sendNIDVerifyRequest(OLCB_NodeID *nid);
-  
+    
   bool sendAMR(OLCB_NodeID *nid);
   bool sendAMD(OLCB_NodeID *nid);
   

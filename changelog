@@ -1,3 +1,28 @@
+14 September 2011:
+
+Consider this 1.0beta. Woot!
+
+1) Previously, X_Handler (Event_Handler, Datagram_Handler, Stream_Handler) were subclasses of Virtual_Node. This is fine so long as a virtual node only uses one form of transport. But of course, complex applications will require virtual nodes to implement protocols that use multiple transports. I have refactored the X_Handler classes so that they do not inherit from a common ancestor, and hence can be used in any combination as mix-in classes.
+
+	A virtual node, now, will subclass Virtual_Node, and any of the X_Handlers it intends to use. It will then implement the update() and handleMessage() methods, calling, as needed, X_Handler::update and X_Handler::handleMessage.
+	
+	Virtual nodes must follow certain inviolate rules. The only method that is permitted to send a message via Link is the update() method. The other methods, including handleMessage, are only permitted to change the internal state of the virtual node. Update() checks the state, and emits messages as necessary.
+
+2) Changed some method names. init becomes initialize. handleFrame becomes handleMessage. Just makes things a little neater.
+
+3) Restructure Virtual Node initialization. Eliminated initialize(), addNID(), and addLink() methods, to streamline node initialization.
+
+4) The Link class no longer has its own NodeID; NodeIDs can now only be assigned to virtual nodes. This means that every node must include at least once virtual node (in which case, it isn't really virtual, it's a representation of the entire node). Eliminated addHandler from Link; now only a call to addVNode is required.
+	
+5) Updated the 4P and 4C demos to compile; have not updated the other demos, which now no longer work. Complete updates wouldn't be very hard though. I'd just rather do it later.
+
+These changes are tested to compile, and are tested to some rudamentary level on actual hardware. In particular, the included demos have been tested as working, with the notable exception of the Throttle and Command Station demos written for NMRA2011X. These demos are non-trivial to port to the new way of doing things, and will take some time to straighten out.
+
+Important omissions: Currently, Node Initialized messages are not being generated correctly. Boo! Need to add a mechanism to permit the pre-allocation of NIDas without requiring a corresponding NID (shouldn't be hard)
+
+Remaining work includes documenting how to use the library with all the recent structural changes, rigorous testing, and implementing the Stream protocol (which might have to wait). Next steps include adding in application-level protocols: Configuration, Learning, Train Control, etc.
+
+
 12 September 2011:
 	* Removed a nasty bug where datagram_handlers would never actually send a datagram. Oops!
 	* Totally redid the mechanism for passing output packets among VNodes; previous version was a total memory hog. New version much better, and more elegant too.

@@ -9,7 +9,7 @@ class OLCB_Event {
   
   uint8_t val[8];
 
-  OLCB_Event() {
+  OLCB_Event() : flags(0) {
       val[0] = 0;
       val[1] = 0;
       val[2] = 0;
@@ -20,7 +20,7 @@ class OLCB_Event {
       val[7] = 0;
   }
   
-  OLCB_Event(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7) {
+  OLCB_Event(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7) : flags(0) {
       val[0] = b0;
       val[1] = b1;
       val[2] = b2;
@@ -55,11 +55,11 @@ class OLCB_Event {
       return 0;
   }
   
-  int findIndexInArray(OLCB_Event* array, int len) {
+  int16_t findIndexInArray(OLCB_Event* array, int len) {
       return findIndexInArray(array, len, 0);
   }
 
-  int findIndexInArray(OLCB_Event* array, int len, int index)
+  int16_t findIndexInArray(OLCB_Event* array, int len, int index)
   {
       if(index >= len) return -1;
       for (int i = index; i<len; i++)
@@ -93,7 +93,7 @@ class OLCB_Event {
   }
 
   // bit mask local flags
-  int flags;
+  uint8_t flags;
 
   // Mark entry as consumer
   static const int CAN_CONSUME_FLAG = 0x20;

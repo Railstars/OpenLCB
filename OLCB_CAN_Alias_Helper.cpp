@@ -23,6 +23,8 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 		//to reallocate it. No problem, but we also need to inform any vnodes using that alias that they are inhibited, and should not do anything! TODO!
 		if(alias == _nodes[i].alias) //we only care if the aliases match
 		{
+//			Serial.print("Alias helper caught a match :( for alias ");
+//			Serial.println(_nodes[i].alias, DEC);
 			switch(_nodes[i].state)
 			{
 				case  ALIAS_INITIAL_STATE:
@@ -89,21 +91,38 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 					//on the other hand, if the message is a CID, we need to nip it in the bud!
 					if(msg->isCID())
 					{
-						//Serial.println("READY: heard CID, sending RID");
+//						Serial.println("READY: heard CID, sending RID");
 						_nodes[i].state = ALIAS_RESENDRID_STATE;
 					}
-					else if(msg->isVerifiedNID())
+					else if(msg->isVerifiedNID()) //////****TODO THIS CODE IS NOT AT ALL RIGHT!!
 					{
 						OLCB_NodeID n;
 						msg->getNodeID(&n);
-						if(&n == (_nodes[i].node)); //uh-oh!
+						//Notice that we do not load up the alias! We already know the aliases are the same, and the comparator will only compare the alises if both are loaded. At this point, we want to know if the actual NIDs themselves are identical, and this part of the comparation is only triggered if one or both alises is '0', undefined.
+						//n.alias = msg->getSourceAlias();
+//						Serial.println("READY: heard verifiedNID");
+//						Serial.println("*&*&*&");
+						bool thesame = (n == *(_nodes[i].node));
+//						if(thesame)
+//							Serial.println("NID MATCHES! (YAY!)");
+//						else
+//							Serial.println("NID DOES NOT MATCH! (BOO!)");
+
+						if(!thesame)
 						{
+							//uh-oh! same alias, different NID (notice that different alias, same NID == duplicate NID!!! TODO
+//							n.print();
+//							_nodes[i].node->print();
+//							Serial.println("*&*&*&");
 							//TODO This is where we have to put the owning vnode into an inhibited state while we reallocate its alias!
-							//Serial.println("READY: heard verifiedNID, reallocating");
-							//_nodes[i].node->print();
+//							Serial.println("READY: reallocating");
 
 							reAllocateAlias(&(_nodes[i]));
 						}
+//						else
+//						{
+//							Serial.println("READY: relief!");
+//						}
 					}
 					break;
 			}
@@ -113,15 +132,22 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 
 void OLCB_CAN_Alias_Helper::update(void)
 {
-
-		if(_nodes[index].node->alias == 0)
-		{
-			_nodes[index].state = ALIAS_EMPTY_STATE;
-		}
+	//TODO is this really encessary?
+	if(_nodes[index].node->alias == 0)
+	{
+		_nodes[index].state = ALIAS_EMPTY_STATE;
+	}
+	if(_nodes[index].state != ALIAS_EMPTY_STATE && _nodes[index].state != ALIAS_READY_STATE)
+	{
+		Serial.print("update: index=");
+		Serial.println(index,DEC);
+		Serial.print("  state=");
+		Serial.println(_nodes[index].state, DEC);
+	}
 		
-		//check queue for NIDS ready to send NID.
-		switch(_nodes[index].state)
-		{
+	//check queue for NIDS ready to send NID.
+	switch(_nodes[index].state)
+	{
 			case ALIAS_EMPTY_STATE:
 			case ALIAS_INITIAL_STATE:
 			case ALIAS_READY_STATE:
@@ -213,7 +239,7 @@ void OLCB_CAN_Alias_Helper::update(void)
   index = (index+1)%CAN_ALIAS_BUFFER_SIZE;
 }
 
-bool OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
+void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
 	nodeID->initialized = false;
 	private_nodeID_t *slot = NULL;
@@ -222,6 +248,7 @@ bool OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	{
 		if(_nodes[i].state == ALIAS_INITIAL_STATE)
 		{
+			Serial.println("allocate: found a slot w/alias!");
 			slot = &(_nodes[i]);
 			break;
 		}
@@ -232,6 +259,7 @@ bool OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 		{
 			if(_nodes[i].state == ALIAS_EMPTY_STATE)
 			{
+				Serial.println("allocate: found a slot w/o alias!");
 				slot = &(_nodes[i]);
 				break;
 			}
@@ -240,8 +268,8 @@ bool OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	if(!slot)
 	//SERIUS ERROR CONDITION! NO SPACE TO CACHE NODEID!!
 	{
-		//Serial.println("NO MORE SLOTS FOR NODEIDS!");
-		//Serial.println(CAN_ALIAS_BUFFER_SIZE, DEC);
+		Serial.println("allocate: NO MORE SLOTS FOR NODEIDS!");
+		Serial.println(CAN_ALIAS_BUFFER_SIZE, DEC);
 		while(1);
 	}
 
@@ -251,22 +279,24 @@ bool OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	//does the slot already have an alias we can reuse?
 	if(slot->alias)
 	{
+		Serial.print("allocate: no need to allocate alias: ");
+		Serial.println(slot->alias, DEC);
 		slot->node->alias = slot->alias; //copy it into the nodeID
 		slot->state = ALIAS_AMD_STATE; //ready to go! Just send an AMD
 	}
 	else //we'll need to generate and allocate an alias
 	{
+		Serial.println("allocate: moving to CID1!");
 		uint32_t lfsr1 = (((uint32_t)nodeID->val[0]) << 16) | (((uint32_t)nodeID->val[1]) << 8) | ((uint32_t)nodeID->val[2]);
 		uint32_t lfsr2 = (((uint32_t)nodeID->val[3]) << 16) | (((uint32_t)nodeID->val[4]) << 8) | ((uint32_t)nodeID->val[5]);
 		slot->alias = (lfsr1 ^ lfsr2 ^ (lfsr1>>12) ^ (lfsr2>>12) )&0xFFF;
 		slot->node->alias = slot->alias;
 		slot->state = ALIAS_CID1_STATE;
 	}
-	
-	return true; //this should change to a void function. TODO
+	slot->node->print();
 }
 
-bool OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
+void OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
 {
 	uint32_t temp1 = ((nodeID->lfsr1<<9) | ((nodeID->lfsr2>>15)&0x1FF)) & 0xFFFFFF;
 	uint32_t temp2 = (nodeID->lfsr2<<9) & 0xFFFFFF;
@@ -293,11 +323,12 @@ bool OLCB_CAN_Alias_Helper::releaseAlias(OLCB_NodeID* nodeID)
 	//find the node in our list
 	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
-		if(nodeID == _nodes[i].node)
+		if(*nodeID == *(_nodes[i].node)) //if have the same ID, NOT if both point to the same object
 		{
 			_nodes[i].state = ALIAS_RELEASING_STATE;
 			_nodes[i].node->initialized = false;
+			return true; //short circuit, should only appear once. This is perhaps not the best assumption ever. TODO
 		}
 	}
-	return true; //TODO don't need this any more
+	return false; //should never reach here, unless we don't have the ID in our list
 }

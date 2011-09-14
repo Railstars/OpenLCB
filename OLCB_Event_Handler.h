@@ -5,8 +5,6 @@
  *      Author: dgoodman
  */
 
-//TODO port existing 4P and 4C demos to test this code!
-
 #ifndef OLCB_EVENT_HANDLER_H_
 #define OLCB_EVENT_HANDLER_H_
 
@@ -14,6 +12,7 @@
 #include "OLCB_NodeID.h"
 #include "OLCB_Event.h"
 #include "OLCB_Link.h"
+#include "OLCB_Virtual_Node.h"
 
 // Mark as waiting to have Identify sent
 #define IDENT_FLAG 0x01
@@ -26,26 +25,20 @@
 // Mark entry to send a learn message
 #define TEACH_FLAG 0x10
 
-class OLCB_Event_Handler: public OLCB_Virtual_Node
+class OLCB_Event_Handler: public OLCB_Handler
 {
 public:
-    OLCB_Event_Handler();
-
-    ~OLCB_Event_Handler();
-
-    virtual void init(void);
-
     virtual void update(void); //this method should be overridden to detect conditions for the production of events
 
     void loadEvents(OLCB_Event* events, uint16_t numEvents);
 
-    bool produce(OLCB_Event *event); //call to produce an event with ID = EID
+    bool produce(uint16_t index); //OLCB_Event *event); //call to produce an event with ID = EID
 
     //this method should be overridden to handle the consumption of events.
     virtual bool consume(OLCB_Event *event);
 
     /* Protocol level interactions for every kind of virtual node */
-    bool handleFrame(OLCB_Buffer *buffer);
+    bool handleMessage(OLCB_Buffer *buffer);
 
     /* I don't understand what this method does, so I just copied it directly */
     void newEvent(int index, bool p, bool c);

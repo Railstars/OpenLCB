@@ -1,9 +1,28 @@
 #include <OpenLCB.h>
 #include <can.h>
 
-class simpleDatagramReceiver: public OLCB_Datagram_Handler
+class simpleDatagramReceiver: public OLCB_Virtual_Node, public OLCB_Datagram_Handler
 {
  public:
+  void create(OLCB_Link *link, OLCB_NodeID *nid)
+    {
+      OLCB_Datagram_Handler::create(link,nid);
+      OLCB_Virtual_Node::create(link,nid);
+    }
+
+  bool handleMessage(OLCB_Buffer *buffer)
+    {
+      return OLCB_Datagram_Handler::handleMessage(buffer);
+    }
+    
+  void update(void)
+  {
+    if(isPermitted())
+    {
+      OLCB_Datagram_Handler::update();
+    }
+  }
+
   bool processDatagram(void) //NOT "boolean"!
   {
      //To have made it this far, we can be sure that _rxDatagramBuffer has a valid datagram loaded up, and that it is in fact addressed to us.
@@ -17,23 +36,19 @@ class simpleDatagramReceiver: public OLCB_Datagram_Handler
   }
 };
 
-OLCB_NodeID nid(2,1,13,0,0,2);
-OLCB_NodeID nid2(6,1,0,0,0,4);
-OLCB_CAN_Link link(&nid);
+OLCB_NodeID nid(2,1,13,0,1,1);
+OLCB_CAN_Link link;
 simpleDatagramReceiver datagram_handler;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Begin!");
   
-  delay(1000);
   // put your setup code here, to run once:
   link.initialize();
 
-  Serial.print("This is my alias (should not be 0): ");
-  Serial.println(nid.alias);
-  datagram_handler.setLink((OLCB_Link*)&link);
-  datagram_handler.setNID(&nid2);    //causes it to be set up as a virtual node with it's own NID
+  datagram_handler.create(&link, &nid);
+  link.addVNode(&datagram_handler);
 }
 
 void loop() {

@@ -48,35 +48,47 @@ class OLCB_NodeID {
       val[5] = b5;
   }
   
+  //***********TODO THERE IS A SERIOUS ISSUE HERE THAT I AM HAVING PROBLEMS DEBUGGING!!!
   bool operator==(const OLCB_NodeID &other) const
   { 
     //first, check the aliases. Only pay them heed if they both are non-zero.
-    if(alias && other.alias)
+    if((alias!=0) && (other.alias!=0))
     {
 //      Serial.println("==: comparing aliases");
 //      Serial.println(alias,DEC);
-//      Serial.println(other.alias, DEC);
-//      Serial.println(alias==other.alias, DEC);
+//       Serial.println(other.alias, DEC);
+//       Serial.println(alias==other.alias, DEC);
       return (alias==other.alias); //same alias, same NID. Effectively.
     }
     //if one or both aliases are zero, compare the NID itself. Aliases can't always be trusted :D
     else
     {
-//       Serial.println("==: comparing NID directly");
-//       Serial.println(val[0]==other.val[0], DEC);
-//       Serial.println(val[1]==other.val[1], DEC);
-//       Serial.println(val[2]==other.val[2], DEC);
-//       Serial.println(val[3]==other.val[3], DEC);
-//       Serial.println(val[4]==other.val[4], DEC);
-//       Serial.println(val[5]==other.val[5], DEC);
+//        Serial.println("==: comparing NID directly");
+//        Serial.println(val[0]==other.val[0], DEC);
+//        Serial.println(val[1]==other.val[1], DEC);
+//        Serial.println(val[2]==other.val[2], DEC);
+//        Serial.println(val[3]==other.val[3], DEC);
+//        Serial.println(val[4]==other.val[4], DEC);
+//        Serial.println(val[5]==other.val[5], DEC);
+//        Serial.println((val[0]==other.val[0])&&(val[1]==other.val[1])
+//          &&(val[2]==other.val[2])&&(val[3]==other.val[3])
+//          &&(val[4]==other.val[4])&&(val[5]==other.val[5]), DEC);
     return  (val[0]==other.val[0])&&(val[1]==other.val[1])
           &&(val[2]==other.val[2])&&(val[3]==other.val[3])
           &&(val[4]==other.val[4])&&(val[5]==other.val[5]);
     }
   }
   
+    bool sameNID(const OLCB_NodeID &other) const
+  { 
+    return  (val[0]==other.val[0])&&(val[1]==other.val[1])
+          &&(val[2]==other.val[2])&&(val[3]==other.val[3])
+          &&(val[4]==other.val[4])&&(val[5]==other.val[5]);
+  }
+  
   bool operator!=(const OLCB_NodeID &other) const
   {
+  	Serial.println("!=: calling ==");
     return !(*this == other);
   }
   

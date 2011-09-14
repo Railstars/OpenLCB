@@ -13,10 +13,10 @@
 
 // A mix-in class for handling the datagram protocol.
 
-class OLCB_Datagram_Handler : public OLCB_Virtual_Node
+class OLCB_Datagram_Handler : public OLCB_Handler
 {
  public:
-  OLCB_Datagram_Handler() : OLCB_Virtual_Node(), _rxDatagramBufferFree(true), _txDatagramBufferFree(true), _sentTime(0), _txFlag(false), _loc(0)
+  OLCB_Datagram_Handler() : _rxDatagramBufferFree(true), _txDatagramBufferFree(true), _sentTime(0), _txFlag(false), _loc(0)
   {
 #if defined(__arm__)
     _rxDatagramBuffer = new OLCB_Datagram;
@@ -26,16 +26,8 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
     _txDatagramBuffer = (OLCB_Datagram*)malloc(sizeof(OLCB_Datagram));
 #endif
   }
-  
-  void setLink(OLCB_Link *newLink);
-  void setNID(OLCB_NodeID *newNID);
-  
-  virtual bool verifyNID(OLCB_NodeID *nid)
-  {
-    return OLCB_Virtual_Node::verifyNID(nid);
-  }
-  
-  virtual bool handleFrame(OLCB_Buffer *frame);
+    
+  virtual bool handleMessage(OLCB_Buffer *frame);
   
   virtual void update(void);
   

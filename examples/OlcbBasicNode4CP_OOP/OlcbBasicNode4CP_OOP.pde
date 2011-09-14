@@ -62,6 +62,7 @@ class MyEventHandler: public OLCB_Virtual_Node, public OLCB_Event_Handler
 {
 public:
     ButtonLed* buttons[8];
+    bool states[4];
     
     void create(OLCB_Link *link, OLCB_NodeID *nid)
     {
@@ -80,17 +81,35 @@ public:
         buttons[2] = buttons[3] = &p15;
         buttons[4] = buttons[5] = &p16;
         buttons[6] = buttons[7] = &p17;
+        
+        states[0] = states[1] = states[2] = states[3] = false;
     }
 
     void update(void)
     {
       if(isPermitted())
       {
+        // called from loop(), this looks at pins and
+        // and decides which events to fire
+        // with pce.produce(i);
+        // The first event of each pair is sent on button down,
+        // and second on button up.
+        for (int i = 0; i<eventNum/2; i++) { // for each button and event-pair
+            if (states[i] != buttons[i*2]->state){ // . did its state change?
+                states[i] = buttons[i*2]->state; // .. if so, remember it and
+                Serial.print("button "); Serial.println(i);
+                if (states[i]) { // .. if the new state is down
+                    produce(i*2); // ... send the first event of the pair
+                } else { // .. else
+                    produce(i*2+1); // .., send the second event
+                }
+            }
+        }
         OLCB_Event_Handler::update(); //called last to permit the new events to be sent out immediately.      
       }
     }
 
-    bool consume(OLCB_Event *event)
+    bool consume(OLCB_Event *event) //should pass an index, and not an event, I think
     {
       // Link received PC events to specific actions of this node
       // This routine is aautomatically called if an event is received that
@@ -119,7 +138,7 @@ void setup()
     pce.initialize();
     pce.loadEvents(events, eventNum);
     for (int i=0; i<eventNum; i++) {
-        pce.newEvent(i,false,true); // produce, consume
+        pce.newEvent(i,true,true); // produce, consume
     }
     link.addVNode(&pce);
 }

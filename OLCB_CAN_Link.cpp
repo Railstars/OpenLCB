@@ -15,11 +15,8 @@ bool OLCB_CAN_Link::initialize(void)
     _translationCache.initialize(10);
     
     //Negotiate the alias for this Node's real ID.
-    if(!_aliasHelper.allocateAlias(_nodeID))
-    {
-      return false;
-    }
-
+    //_aliasHelper.allocateAlias(_nodeID);
+    
   return true;
 }
 
@@ -69,21 +66,23 @@ bool OLCB_CAN_Link::handleTransportLevel()
       // check address
       OLCB_NodeID n;
       rxBuffer.getNodeID(&n);
-      if (n == *_nodeID) //if the verification matches our nodeID, respond
-      {
-        // reply; should be threaded, but isn't
-        sendVerifiedNID(_nodeID);
-        return true;
-      }
-      else //it might yet match a virtual NID; check each handler to see
-      {
-        bool flag = false;
+      // if (n == *_nodeID) //if the verification matches our nodeID, respond
+//       {
+//         // reply; should be threaded, but isn't
+//         sendVerifiedNID(_nodeID);
+//         return true;
+//       }
+//       else //it might yet match a virtual NID; check each handler to see
+//       {
+//         bool flag = false;
         //check all handlers, not just datagram handlers
         OLCB_Virtual_Node *iter = _handlers;
         while(iter)
         {
           if(iter->verifyNID(&n))
           {
+          	Serial.println("sending VerifiedID");
+          	iter->NID->print();
             sendVerifiedNID(iter->NID);
             break;
           }
@@ -92,20 +91,22 @@ bool OLCB_CAN_Link::handleTransportLevel()
             iter = iter->next;
           }
         }
-      }
+//      }
       return true;
     }
     // Maybe this is a global Verify request, in which case we have a lot of packets to send!
     else if (rxBuffer.isVerifyNIDglobal()) {
       // reply to global request
       // ToDo: This should be threaded
-      sendVerifiedNID(_nodeID);
+      //sendVerifiedNID(_nodeID);
       //and again for all virtual nodes
       OLCB_Virtual_Node *iter = _handlers;
       while(iter != NULL)
       {
         if(iter->verifyNID(iter->NID))
         {
+          Serial.println("sending VerifiedID (global)");
+    	  iter->NID->print();
           sendVerifiedNID(iter->NID);
         }
         iter = iter->next;
@@ -187,7 +188,7 @@ void OLCB_CAN_Link::deliverMessage(void)
     OLCB_Virtual_Node *iter = _handlers;
     while(iter)
     {
-      if(iter->handleFrame(&rxBuffer))
+      if(iter->handleMessage(&rxBuffer))
       {
         break;
       }
@@ -208,7 +209,7 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
     if(!alias) //not cached!
     {
       //need to ask
-      sendNIDVerifyRequest(&(datagram->destination)); //if it can't go through, it'll get called again. no need to loop.
+      sendVerifyNID(&(datagram->source), &(datagram->destination)); //if it can't go through, it'll get called again. no need to loop.
       return 0;
     }
   }
@@ -238,11 +239,11 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   return len;
 }
 
-bool OLCB_CAN_Link::sendNIDVerifyRequest(OLCB_NodeID *nid)
+bool OLCB_CAN_Link::sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request)
 {
   //first, see if a request is pending
 //  uint32_t time = millis();
-  
+  //TODO this mechanism could be severely improved to permit multiple verifyIDs to be sent out!!
   if(!_nodeIDToBeVerified.empty() && ((millis() - _aliasCacheTimer) < 2000) ) //it's not zeros, and it hasn't yet been a full second since the last request
   {
     return false;
@@ -250,10 +251,11 @@ bool OLCB_CAN_Link::sendNIDVerifyRequest(OLCB_NodeID *nid)
   if (!can_check_free_buffer()){
     return false;  // couldn't send just now
   }
-  memcpy(&_nodeIDToBeVerified, nid, sizeof(OLCB_NodeID));
-  sendVerifiedNID(_nodeID);
-  txBuffer.init(_nodeID);
-  txBuffer.setVerifyNID(nid);
+  memcpy(&_nodeIDToBeVerified, request, sizeof(OLCB_NodeID));
+  //sendVerifiedNID(_nodeID);
+  //txBuffer.init(_nodeID);
+  txBuffer.init(src); //set the source NID to the requesting NID
+  txBuffer.setVerifyNID(request);
   while(!sendMessage());  // wait for queue, but earlier check says will succeed
   _aliasCacheTimer = millis(); //set the clock going. A request will only be permitted to stand for 1 second.
   return true;
@@ -319,7 +321,7 @@ bool OLCB_CAN_Link::sendAMD(OLCB_NodeID *nid)
   return true;
 }
 
-bool OLCB_CAN_Link::sendEvent(OLCB_Event *event)
+bool OLCB_CAN_Link::sendPCER(OLCB_Event *event)
 {
     if(!can_check_free_buffer())
         return false;
@@ -331,9 +333,11 @@ bool OLCB_CAN_Link::sendEvent(OLCB_Event *event)
 bool OLCB_CAN_Link::sendConsumerIdentified(OLCB_Event *event)
 {
     if(!can_check_free_buffer())
+    {
         return false;
+    }
     txBuffer.setConsumerIdentified(event);
-    while(!sendMessage()); //TODO make a new method for sendMessage that also repeats it back to the link!
+    while(!sendMessage());
     return true;
 }
 
@@ -348,18 +352,39 @@ bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
 
 bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 {
+	Serial.println("sendProducerIdentified");
+    
     if(!can_check_free_buffer())
+    {
+    	Serial.println("    no free buffer");
         return false;
+    }
+
+	Serial.println("    s1");
     txBuffer.setProducerIdentified(event);
-    while(!sendMessage());
+    Serial.println("    s2");
+    while(!sendMessage())
+    {
+    	Serial.println("    s3");
+    }
+    Serial.println("    s4");
     return true;
 }
 
 
 
-bool OLCB_CAN_Link::addVNode(OLCB_NodeID *NID)
+void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
-  return _aliasHelper.allocateAlias(NID); //TODO This can sometimes fail!
+	Serial.println("Adding Vnode:");
+	vnode->NID->print();
+	OLCB_Link::addVNode(vnode);
+	_aliasHelper.allocateAlias(vnode->NID);
+}
+
+void OLCB_CAN_Link::removeVNode(OLCB_Virtual_Node *vnode)
+{
+	OLCB_Link::removeVNode(vnode);
+	_aliasHelper.releaseAlias(vnode->NID);
 }
 
 bool OLCB_CAN_Link::sendMessage()
