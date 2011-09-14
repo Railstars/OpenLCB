@@ -94,7 +94,13 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 //						Serial.println("READY: heard CID, sending RID");
 						_nodes[i].state = ALIAS_RESENDRID_STATE;
 					}
-					else if(msg->isVerifiedNID()) //////****TODO THIS CODE IS NOT AT ALL RIGHT!!
+					if(msg->isRID())
+					{
+						//send a VerifiedNID message as a particularly firm reminder that the offending node is in the wrong here, as the usual RID will be ignored.
+						_nodes[i].state = ALIAS_SENDVERIFIEDNID_STATE;
+						//_link->sendVerifiedID(_nodes[i].node);
+					}
+					else if(msg->isVerifiedNID())
 					{
 						OLCB_NodeID n;
 						msg->getNodeID(&n);
@@ -218,6 +224,13 @@ void OLCB_CAN_Alias_Helper::update(void)
 				if(!_link->sendRID(_nodes[index].node))
 				{
 					_nodes[index].state = ALIAS_RESENDRID_STATE;
+				}
+				break;
+			case ALIAS_SENDVERIFIEDNID_STATE:
+				_nodes[index].state = ALIAS_READY_STATE;
+				if(!_link->sendVerifiedID(_nodes[index].node))
+				{
+					_nodes[index].state = ALIAS_SENDVERIFIEDNID_STATE;
 				}
 				break;
 			case ALIAS_AMD_STATE:

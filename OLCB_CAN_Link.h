@@ -47,7 +47,8 @@ class OLCB_CAN_Link;
 #define ALIAS_RID_STATE 6
 #define ALIAS_AMD_STATE 7
 #define ALIAS_RELEASING_STATE 8
-#define ALIAS_RESENDRID_STATE 18
+#define ALIAS_RESENDRID_STATE 15
+#define ALIAS_SENDVERIFIEDNID_STATE 16
 #define ALIAS_READY_STATE 20	//assigned to a NodeID
 
 struct private_nodeID_t
