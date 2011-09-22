@@ -3,6 +3,7 @@
 void OLCB_CAN_Alias_Helper::initialize(OLCB_CAN_Link *link)
 {
 	_link = link;
+	_helper_value = millis();
 }
 
 void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
@@ -27,7 +28,8 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 //			Serial.println(_nodes[i].alias, DEC);
 			switch(_nodes[i].state)
 			{
-				case  ALIAS_INITIAL_STATE:
+				case  ALIAS_HOLDING_STATE:
+					//TODO this is no longer correct. We can and should defend ourselves here.
 					_nodes[i].state = ALIAS_EMPTY_STATE; //fall through
 				case  ALIAS_EMPTY_STATE:
 					_nodes[i].alias = 0; //very simple, just make sure we don't accidentally use the same alias again.
@@ -155,11 +157,11 @@ void OLCB_CAN_Alias_Helper::update(void)
 	switch(_nodes[index].state)
 	{
 			case ALIAS_EMPTY_STATE:
-			case ALIAS_INITIAL_STATE:
+			case ALIAS_HOLDING_STATE:
 			case ALIAS_READY_STATE:
 				break;	//do nothing! move on to the next node
 			case ALIAS_RELEASING_STATE: //emit AMR, return to initial state
-				_nodes[index].state = ALIAS_INITIAL_STATE;
+				_nodes[index].state = ALIAS_HOLDING_STATE;
 				if(!_link->sendAMR(_nodes[index].node))
 				{
 					_nodes[index].state = ALIAS_RELEASING_STATE;
@@ -212,7 +214,10 @@ void OLCB_CAN_Alias_Helper::update(void)
 				{
 					//Serial.println("sending RID");
 					//_nodes[index].node->print();
-					_nodes[index].state = ALIAS_AMD_STATE;
+					if(_nodes[index].node) //if there is a real NodeID attached
+						_nodes[index].state = ALIAS_AMD_STATE;
+					else //no actual NodeID, so just go to the holding state.
+						_nodes[index].state = ALIAS_HOLDING_STATE;
 					if(!_link->sendRID(_nodes[index].node))
 					{
 						_nodes[index].state = ALIAS_RID_STATE;
@@ -228,7 +233,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 				break;
 			case ALIAS_SENDVERIFIEDNID_STATE:
 				_nodes[index].state = ALIAS_READY_STATE;
-				if(!_link->sendVerifiedID(_nodes[index].node))
+				if(!_link->sendVerifiedNID(_nodes[index].node))
 				{
 					_nodes[index].state = ALIAS_SENDVERIFIEDNID_STATE;
 				}
@@ -252,6 +257,22 @@ void OLCB_CAN_Alias_Helper::update(void)
   index = (index+1)%CAN_ALIAS_BUFFER_SIZE;
 }
 
+void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
+{
+	//the idea here is to take every alias in the "Empty" state (i.e., that is unallocated), and to go ahead and allocate the sucker, moving it directly into the Initial state, rather than the AMD state.
+	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	{
+		if(_nodes[i].state == ALIAS_EMPTY_STATE)
+		{
+			//we don't have a NID to calculate the lfsr initial values, so we'll use the current time instead.
+			uint32_t lfsr1 = millis();
+			uint32_t lfsr2 = _helper_value;
+			_nodes[i].alias = (lfsr1 ^ lfsr2 ^ (lfsr1>>12) ^ (lfsr2>>12) )&0xFFF;
+			_nodes[i].state = ALIAS_CID1_STATE;
+		}
+	}
+}
+
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
 	nodeID->initialized = false;
@@ -259,7 +280,7 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	//find a location for this nodeID in our list
 	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
-		if(_nodes[i].state == ALIAS_INITIAL_STATE)
+		if(_nodes[i].state == ALIAS_HOLDING_STATE)
 		{
 			Serial.println("allocate: found a slot w/alias!");
 			slot = &(_nodes[i]);
@@ -324,12 +345,14 @@ void OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
 
 	nodeID->alias = (nodeID->lfsr1 ^ nodeID->lfsr2 ^ (nodeID->lfsr1>>12) ^ (nodeID->lfsr2>>12) )&0xFFF;
 	
-	nodeID->node->alias = nodeID->alias;
+	if(nodeID->node)
+	{
+		nodeID->node->alias = nodeID->alias;
+		nodeID->node->initialized = false;
+	}
 	
 	nodeID->state = ALIAS_CID1_STATE;
-	nodeID->node->initialized = false;
 }
-
 
 bool OLCB_CAN_Alias_Helper::releaseAlias(OLCB_NodeID* nodeID)
 {
@@ -344,4 +367,29 @@ bool OLCB_CAN_Alias_Helper::releaseAlias(OLCB_NodeID* nodeID)
 		}
 	}
 	return false; //should never reach here, unless we don't have the ID in our list
+}
+
+void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
+{
+//	TODO
+	//find the corresponding alias
+	private_nodeID_t *slot=NULL;
+	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	{
+		if(nodeID == _nodes[i].node)
+		{
+			slot = &_nodes[i];
+			break;
+		}
+	}
+	
+	if(!slot) //couldn't find it, nothing to release
+	{
+		return;
+	}
+	
+	//remove it's NID
+	slot->node = NULL;
+	//move it into the allocated, but waiting state
+	slot->state = ALIAS_HOLDING_STATE;
 }

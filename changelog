@@ -1,3 +1,9 @@
+TODO:
+look at openlcb/trunk/documents/CommonMessageDefinitions.html
+  and implement these different messages types!
+implement preallocation of aliases
+fix Initialization complete
+
 14 September 2011:
 
 Consider this 1.0beta. Woot!

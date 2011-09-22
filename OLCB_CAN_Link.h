@@ -39,7 +39,7 @@
 class OLCB_CAN_Link;
 
 #define ALIAS_EMPTY_STATE 0	//idle, doing nothing, no alias
-#define ALIAS_INITIAL_STATE 1	//alias allocated, not assigned to a NodeID
+#define ALIAS_HOLDING_STATE 1	//alias allocated, not assigned to a NodeID
 #define ALIAS_CID1_STATE 2
 #define ALIAS_CID2_STATE 3
 #define ALIAS_CID3_STATE 4
@@ -77,14 +77,17 @@ class OLCB_CAN_Alias_Helper
     void initialize(OLCB_CAN_Link *link);
     void checkMessage(OLCB_CAN_Buffer *msg);
     void update(void);
+    void preAllocateAliases(void);
     void allocateAlias(OLCB_NodeID* nodeID);
     void reAllocateAlias(private_nodeID_t* nodeID);
     bool releaseAlias(OLCB_NodeID* nodeID);
+    void idleAlias(OLCB_NodeID* nodeID);
   private:
     //methods
     //fields
     uint8_t index;
     OLCB_CAN_Link *_link;
+    uint32_t _helper_value; //for constructing aliases with a NID to seed the LSFR.
     private_nodeID_t _nodes[CAN_ALIAS_BUFFER_SIZE];
 };
 /**********************/
