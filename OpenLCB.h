@@ -11,3 +11,5 @@
 #include "OLCB_NodeID.h"
 #include "OLCB_Stream.h"
 #include "OLCB_Virtual_Node.h"
+#include "OLCB_DCC_Train.h"
+#include "OLCB_Train_Controller.h"
