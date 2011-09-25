@@ -5,6 +5,7 @@
 #include "OLCB_Datagram_Handler.h"
 #include "OLCB_Datagram.h"
 #include "DCCPacketScheduler.h"
+#include "float16.h"
 
 #define DATAGRAM_MOTIVE             	    0x30
 #define DATAGRAM_MOTIVE_SETSPEED			0x01
@@ -28,23 +29,6 @@
 
 #define NUM_SIMULTANEOUS_CONTROLLERS 2
 
-/* data type for storing float16s */
-
-typedef union
-{
-	struct
-	{
-		uint16_t sign : 1;
-		uint16_t exponent : 5;
-		uint16_t mantissa: 10;
-	} number;
-	struct
-	{
-		uint8_t msw;
-		uint8_t lsw;
-	} words;
-} _float16_shape_type;
-
 /***
 Super states:
 	inhibited/permitted
@@ -53,26 +37,46 @@ States in permitted:
 	TODO
 ***/
 
-
-static float float16_to_float32(_float16_shape_type f_val);
-
-
-class OLCB_DCC_Train : public OLCB_Virtual_Node, public OLCB_Datagram_Handler
+class OLCB_DCC_Train
 {
   public:
-	void initialize(void);
-	void update(void);
-	bool processDatagram(void);
-   	void datagramResult(bool accepted, uint16_t errorcode);
+  	void DCC_Train_create(DCCPacketScheduler *controller);
+	void DCC_Train_initialize();
+	void DCC_Train_update(void);
+	bool DCC_Train_processDatagram(OLCB_Datagram *datagram);
+//   	void DCC_Train_datagramResult(bool accepted, uint16_t errorcode);
+
+	bool DCC_Train_isAttached(OLCB_NodeID *node);
    	
   private:
-    uint32_t _timer;
-    uint8_t _speed_steps;
-    uint8_t _speed_curve[128];
-    uint8_t _dcc_address;
-  	int8_t _speed; //in speedsteps; signed for direction
-    OLCB_NodeID *_controllers[NUM_SIMULTANEOUS_CONTROLLERS];
-    uint32_t _FX;
+	  uint8_t DCC_Train_DCCSpeedToNotch(uint8_t dccspeed);
+	  uint8_t DCC_Train_metersPerSecondToDCCSpeed(float mps);
+	  
+	  bool handleAttachDatagram(OLCB_Datagram *datagram) {return false;}
+	  bool handleReleaseDatagram(OLCB_Datagram *datagram) {return false;}
+	  bool handleSetSpeedDatagram(OLCB_Datagram *datagram);
+	  bool handleGetSpeedDatagram(OLCB_Datagram *datagram) {return false;}
+	  bool handleSetFXDatagram(OLCB_Datagram *datagram) {return false;}
+	  bool handleGetFXDatagram(OLCB_Datagram *datagram) {return false;}
+  
+  
+  //helpers
+    uint32_t DCC_Train_timer;
+    DCCPacketScheduler *DCC_Controller;
+//    OLCB_Datagram *DCC_Train_txDatagramBuffer;
+//    OLCB_Datagram *DCC_Train_rxDatagramBuffer;
+//    OLCB_Link *DCC_Train_link;
+
+  //configuration
+    uint8_t DCC_Train_speed_steps;
+    uint8_t DCC_Train_dcc_address;
+    uint8_t DCC_Train_speed_curve[128];
+    float DCC_Train_full_voltage_speed; //yuck! good thing we don't need it very much.
+
+  //state infor
+  	int8_t DCC_Train_speed; //in speedsteps; signed for direction
+    uint32_t DCC_Train_FX; //bitfield of 32 FX
+    OLCB_NodeID *DCC_Train_controllers[NUM_SIMULTANEOUS_CONTROLLERS];
 };
 
 
