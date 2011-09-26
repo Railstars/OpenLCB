@@ -8,12 +8,12 @@
 
 #define DATAGRAM_MOTIVE             	    0x30
 #define DATAGRAM_MOTIVE_SETSPEED			0x01
-#define DATAGRAM_MOTIVE_GETSPEED			0x02
-#define DATAGRAM_MOTIVE_REPORTSPEED			0x03
+#define DATAGRAM_MOTIVE_GETSPEED			0x03
+#define DATAGRAM_MOTIVE_REPORTSPEED			0x02
 
 #define DATAGRAM_MOTIVE_SETFX				0x11
-#define DATAGRAM_MOTIVE_GETFX				0x12
-#define DATAGRAM_MOTIVE_REPORTFX			0x13
+#define DATAGRAM_MOTIVE_GETFX				0x13
+#define DATAGRAM_MOTIVE_REPORTFX			0x12
 
 #define DATAGRAM_MOTIVE_ATTACH      	    0x21
 #define DATAGRAM_MOTIVE_ATTACHED			0x22
@@ -45,12 +45,13 @@ class OLCB_DCC_Train
 	bool DCC_Train_processDatagram(OLCB_Datagram *datagram);
 //   	void DCC_Train_datagramResult(bool accepted, uint16_t errorcode);
 
-	bool DCC_Train_isAttached(OLCB_NodeID *node);
+	bool DCC_Train_isAttached(OLCB_NodeID *node) {return true;} //no security;
    	
   private:
 	  uint8_t DCC_Train_DCCSpeedToNotch(uint8_t dccspeed);
 	  uint8_t DCC_Train_metersPerSecondToDCCSpeed(float mps);
 	  
+	  //TODO need to do these!
 	  bool handleAttachDatagram(OLCB_Datagram *datagram) {return false;}
 	  bool handleReleaseDatagram(OLCB_Datagram *datagram) {return false;}
 	  bool handleSetSpeedDatagram(OLCB_Datagram *datagram);
