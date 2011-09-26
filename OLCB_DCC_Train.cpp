@@ -1,4 +1,5 @@
 #include "OLCB_DCC_Train.h"
+#include "float16.h"
 
 void OLCB_DCC_Train::DCC_Train_create(DCCPacketScheduler *controller)
 {
@@ -126,7 +127,8 @@ bool OLCB_DCC_Train::handleSetSpeedDatagram(OLCB_Datagram *datagram)
 		_float16_shape_type f_val;
 		f_val.words.msw = datagram->data[1];
 		f_val.words.lsw = datagram->data[2];
-		float new_speed = float16_to_float32(f_val);
+		float new_speed;
+		new_speed = float16_to_float32(f_val);
 		int8_t dir = 1; //forward
 		if(new_speed < 0)
 		{
