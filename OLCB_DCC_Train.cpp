@@ -38,6 +38,7 @@ void OLCB_DCC_Train::DCC_Train_update(void)
 	}
 }
 
+/*
 bool OLCB_DCC_Train::DCC_Train_isAttached(OLCB_NodeID *node)
 {
 	for(uint8_t i = 0; i < NUM_SIMULTANEOUS_CONTROLLERS; ++i)
@@ -47,6 +48,7 @@ bool OLCB_DCC_Train::DCC_Train_isAttached(OLCB_NodeID *node)
 	}
 	return false;
 }
+*/
 
 bool OLCB_DCC_Train::DCC_Train_processDatagram(OLCB_Datagram *datagram)
 {		
