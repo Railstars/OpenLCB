@@ -5,7 +5,6 @@
 #include "OLCB_Datagram_Handler.h"
 #include "OLCB_Datagram.h"
 #include "DCCPacketScheduler.h"
-#include "float16.h"
 
 #define DATAGRAM_MOTIVE             	    0x30
 #define DATAGRAM_MOTIVE_SETSPEED			0x01
