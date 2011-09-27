@@ -69,8 +69,56 @@ bool OLCB_CAN_Link::handleTransportLevel()
     {
       // check address
       rxBuffer.getNodeID(&n);
+<<<<<<< HEAD
       //pass it off to the alias helper, since it maintains a definitive list of registered nodeIDs
       _aliasHelper.verifyNID(&n);
+=======
+      // if (n == *_nodeID) //if the verification matches our nodeID, respond
+//       {
+//         // reply; should be threaded, but isn't
+//         sendVerifiedNID(_nodeID);
+//         return true;
+//       }
+//       else //it might yet match a virtual NID; check each handler to see
+//       {
+//         bool flag = false;
+        //check all handlers, not just datagram handlers
+        OLCB_Virtual_Node *iter = _handlers;
+        while(iter)
+        {
+          if(iter->verifyNID(&n))
+          {
+          	//Serial.println("sending VerifiedID");
+          	iter->NID->print();
+            sendVerifiedNID(iter->NID);
+            break;
+          }
+          else
+          {
+            iter = iter->next;
+          }
+        }
+//      }
+      return true;
+    }
+    // Maybe this is a global Verify request, in which case we have a lot of packets to send!
+    else if (rxBuffer.isVerifyNIDglobal()) {
+      // reply to global request
+      // ToDo: This should be threaded
+      //sendVerifiedNID(_nodeID);
+      //and again for all virtual nodes
+      OLCB_Virtual_Node *iter = _handlers;
+      while(iter != NULL)
+      {
+        if(iter->verifyNID(iter->NID))
+        {
+          //Serial.println("sending VerifiedID (global)");
+    	  iter->NID->print();
+          sendVerifiedNID(iter->NID);
+        }
+        iter = iter->next;
+      }
+>>>>>>> Commented out Serial.println lines. Shouldn't have committed with them active ;) Also began to add support for libfixmath fixed-point library in the float16 files.
       return true;
     }
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
@@ -366,6 +414,11 @@ bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
 
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
+<<<<<<< HEAD
+=======
+	//Serial.println("Adding Vnode:");
+	vnode->NID->print();
+>>>>>>> Commented out Serial.println lines. Shouldn't have committed with them active ;) Also began to add support for libfixmath fixed-point library in the float16 files.
 	OLCB_Link::addVNode(vnode);
 	_aliasHelper.allocateAlias(vnode->NID);
 }

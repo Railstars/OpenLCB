@@ -15,7 +15,7 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 	//while allocating aliases, we must restart the process if we receive an incoming message with an alias that matches the one being allocated
 	//notice that we have to guard against attempting to allocate two identical aliases on two different virtual nodes
 	//notice too that we must ignore any CID that we have sent for the nodeID that generated it. Effectively, we can simply ignore any CIDs, and let those aliases that successfully generate a RID to impede the allocation of an identical alias earlier in the process.
-	
+
 	//first, check to see if the source alias matches anything in our queues.
 	uint16_t alias = msg->getSourceAlias();
 	//Serial.print("Checking against alias ");
@@ -88,7 +88,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 	{
 		_nodes[index].state = ALIAS_EMPTY_STATE;
 	}
-		
+
 	//check queue for NIDS ready to send NID.
 	switch(_nodes[index].state)
 	{
@@ -298,8 +298,8 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 		while(1);
 	}
 
-	
-		
+
+
 	slot->node = nodeID;
 	//does the slot already have an alias we can reuse?
 	if(slot->alias)
@@ -346,7 +346,7 @@ void OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
 	{
 		nodeID->node->alias = nodeID->alias;
 	}
-	
+
 	nodeID->state = ALIAS_RELEASING_STATE; //emit AMR?, then go straight into negotiations; will settle into either READY_STATE or HOLDING_STATE depending on whether there's an actual NodeID attached
 }
 
@@ -378,12 +378,12 @@ void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
 			break;
 		}
 	}
-	
+
 	if(!slot) //couldn't find it, nothing to release
 	{
 		return;
 	}
-	
+
 	//remove it's NID
 	slot->node = 0;
 	//move it into the allocated, but waiting state
