@@ -24,18 +24,18 @@ typedef union
 	uint16_t bits;
 } _float16_shape_type;
 
-// adapted from
-// http://www.ogre3d.org/docs/api/html/OgreBitwise_8h_source.html
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// the following two methods are adapted from
+// http://www.ogre3d.org/docs/api/html/OgreBitwise_8h_source.html
 
 _float16_shape_type float32_to_float16(float f32_val);
 
 float float16_to_float32(_float16_shape_type f16_val);
 
+// But I wrote this one.
 fix16_t float16_to_fix16(_float16_shape_type f16_val);
 
 #ifdef __cplusplus
