@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define OLCB_DEBUG
+// #define OLCB_DEBUG
 #include "WProgram.h"
 
 class OLCB_NodeID {
@@ -88,7 +88,7 @@ class OLCB_NodeID {
   
   bool operator!=(const OLCB_NodeID &other) const
   {
-  	Serial.println("!=: calling ==");
+  	//Serial.println("!=: calling ==");
     return !(*this == other);
   }
   

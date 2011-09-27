@@ -147,10 +147,10 @@ void OLCB_CAN_Alias_Helper::update(void)
 	}
 	if(_nodes[index].state != ALIAS_EMPTY_STATE && _nodes[index].state != ALIAS_READY_STATE)
 	{
-		Serial.print("update: index=");
-		Serial.println(index,DEC);
-		Serial.print("  state=");
-		Serial.println(_nodes[index].state, DEC);
+		//Serial.print("update: index=");
+		//Serial.println(index,DEC);
+		//Serial.print("  state=");
+		//Serial.println(_nodes[index].state, DEC);
 	}
 		
 	//check queue for NIDS ready to send NID.
@@ -276,13 +276,13 @@ void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
 	nodeID->initialized = false;
-	private_nodeID_t *slot = NULL;
+	private_nodeID_t *slot = 0;
 	//find a location for this nodeID in our list
 	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
 		if(_nodes[i].state == ALIAS_HOLDING_STATE)
 		{
-			Serial.println("allocate: found a slot w/alias!");
+			//Serial.println("allocate: found a slot w/alias!");
 			slot = &(_nodes[i]);
 			break;
 		}
@@ -293,7 +293,7 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 		{
 			if(_nodes[i].state == ALIAS_EMPTY_STATE)
 			{
-				Serial.println("allocate: found a slot w/o alias!");
+				//Serial.println("allocate: found a slot w/o alias!");
 				slot = &(_nodes[i]);
 				break;
 			}
@@ -302,8 +302,8 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	if(!slot)
 	//SERIUS ERROR CONDITION! NO SPACE TO CACHE NODEID!!
 	{
-		Serial.println("allocate: NO MORE SLOTS FOR NODEIDS!");
-		Serial.println(CAN_ALIAS_BUFFER_SIZE, DEC);
+		//Serial.println("allocate: NO MORE SLOTS FOR NODEIDS!");
+		//Serial.println(CAN_ALIAS_BUFFER_SIZE, DEC);
 		while(1);
 	}
 
@@ -313,14 +313,14 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	//does the slot already have an alias we can reuse?
 	if(slot->alias)
 	{
-		Serial.print("allocate: no need to allocate alias: ");
-		Serial.println(slot->alias, DEC);
+		//Serial.print("allocate: no need to allocate alias: ");
+	    //Serial.println(slot->alias, DEC);
 		slot->node->alias = slot->alias; //copy it into the nodeID
 		slot->state = ALIAS_AMD_STATE; //ready to go! Just send an AMD
 	}
 	else //we'll need to generate and allocate an alias
 	{
-		Serial.println("allocate: moving to CID1!");
+		//Serial.println("allocate: moving to CID1!");
 		uint32_t lfsr1 = (((uint32_t)nodeID->val[0]) << 16) | (((uint32_t)nodeID->val[1]) << 8) | ((uint32_t)nodeID->val[2]);
 		uint32_t lfsr2 = (((uint32_t)nodeID->val[3]) << 16) | (((uint32_t)nodeID->val[4]) << 8) | ((uint32_t)nodeID->val[5]);
 		slot->alias = (lfsr1 ^ lfsr2 ^ (lfsr1>>12) ^ (lfsr2>>12) )&0xFFF;
@@ -373,7 +373,7 @@ void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
 {
 //	TODO
 	//find the corresponding alias
-	private_nodeID_t *slot=NULL;
+	private_nodeID_t *slot = 0;
 	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
 		if(nodeID == _nodes[i].node)
@@ -389,7 +389,7 @@ void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
 	}
 	
 	//remove it's NID
-	slot->node = NULL;
+	slot->node = 0;
 	//move it into the allocated, but waiting state
 	slot->state = ALIAS_HOLDING_STATE;
 }

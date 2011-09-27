@@ -81,7 +81,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
         {
           if(iter->verifyNID(&n))
           {
-          	Serial.println("sending VerifiedID");
+          	//Serial.println("sending VerifiedID");
           	iter->NID->print();
             sendVerifiedNID(iter->NID);
             break;
@@ -105,7 +105,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
       {
         if(iter->verifyNID(iter->NID))
         {
-          Serial.println("sending VerifiedID (global)");
+          //Serial.println("sending VerifiedID (global)");
     	  iter->NID->print();
           sendVerifiedNID(iter->NID);
         }
@@ -352,22 +352,22 @@ bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
 
 bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 {
-	Serial.println("sendProducerIdentified");
+	//Serial.println("sendProducerIdentified");
     
     if(!can_check_free_buffer())
     {
-    	Serial.println("    no free buffer");
+    	//Serial.println("    no free buffer");
         return false;
     }
 
-	Serial.println("    s1");
+	//Serial.println("    s1");
     txBuffer.setProducerIdentified(event);
-    Serial.println("    s2");
+    //Serial.println("    s2");
     while(!sendMessage())
     {
-    	Serial.println("    s3");
+    	//Serial.println("    s3");
     }
-    Serial.println("    s4");
+    //Serial.println("    s4");
     return true;
 }
 
@@ -375,7 +375,7 @@ bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
-	Serial.println("Adding Vnode:");
+	//Serial.println("Adding Vnode:");
 	vnode->NID->print();
 	OLCB_Link::addVNode(vnode);
 	_aliasHelper.allocateAlias(vnode->NID);
