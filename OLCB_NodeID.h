@@ -129,7 +129,7 @@ class OLCB_NodeID {
   void print(void)
   {
 // #if defined(__AVR__) & defined(OLCB_DEBUG)
-#if defined(OLCB_DEBUG)
+//#if defined(OLCB_DEBUG)
     char id[] = "nid:   ";
     Serial.print("alias: ");
     Serial.println(alias,DEC);
@@ -145,7 +145,7 @@ class OLCB_NodeID {
     Serial.println(val[4],DEC);
     Serial.print(id);
     Serial.println(val[5],DEC);
-#endif
+//#endif
   }
 
 };

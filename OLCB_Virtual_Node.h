@@ -44,9 +44,13 @@ class OLCB_Virtual_Node : public OLCB_Handler
   bool isPermitted(void)
   {
   	if(NID)
+  	{
 	  	return NID->initialized;
+	}
 	else
+	{
 		return false;
+	}
   }
   
   OLCB_Virtual_Node *next;  

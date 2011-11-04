@@ -235,6 +235,7 @@
   //This is used for VerifyID, and presumes that the NID to verify is contained in the first 6 bytes of the frame.
   void OLCB_CAN_Buffer::getNodeID(OLCB_NodeID* nid) {
     memcpy(nid->val, data, 6);
+    //nid->print();
     //nid->val[0] = data[0];
     //nid->val[1] = data[1];
     //nid->val[2] = data[2];

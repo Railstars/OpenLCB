@@ -45,6 +45,7 @@ bool OLCB_CAN_Link::sendCID(OLCB_NodeID *nodeID, uint8_t i) {
 bool OLCB_CAN_Link::sendRID(OLCB_NodeID* nodeID) {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   txBuffer.setRID(nodeID->alias);
+  memcpy(txBuffer.data, nodeID->val, 6); //This seems an important part of the message that is being left off!
   while(!sendMessage());  // wait for queue, but earlier check says will succeed
   return true;
 }
@@ -82,7 +83,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
           if(iter->verifyNID(&n))
           {
           	//Serial.println("sending VerifiedID");
-          	iter->NID->print();
+          	//iter->NID->print();
             sendVerifiedNID(iter->NID);
             break;
           }
@@ -106,7 +107,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
         if(iter->verifyNID(iter->NID))
         {
           //Serial.println("sending VerifiedID (global)");
-    	  iter->NID->print();
+    	  //iter->NID->print();
           sendVerifiedNID(iter->NID);
         }
         iter = iter->next;
@@ -375,8 +376,8 @@ bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
-	//Serial.println("Adding Vnode:");
-	vnode->NID->print();
+//	Serial.println("Adding Vnode:");
+//	vnode->NID->print();
 	OLCB_Link::addVNode(vnode);
 	_aliasHelper.allocateAlias(vnode->NID);
 }

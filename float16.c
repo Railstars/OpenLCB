@@ -139,6 +139,7 @@ float float16_to_float32(_float16_shape_type f16_val)
     return v.f;
 }
 
+#ifdef DO_FIX16
 fix16_t float16_to_fix16(_float16_shape_type f16_val)
 {
 // the following works, but relies on floating point multiplication == bad!
@@ -161,3 +162,4 @@ fix16_t float16_to_fix16(_float16_shape_type f16_val)
       else
           return -1 * ( (mantissa | 0x400) << exponent );
 }
+#endif
