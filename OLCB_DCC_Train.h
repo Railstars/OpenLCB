@@ -1,3 +1,5 @@
+#ifdef DO_OLCB_DCC_TRAIN
+
 #ifndef __OLCB_DCC_TRAIN_H__
 #define __OLCB_DCC_TRAIN_H__
 
@@ -81,3 +83,4 @@ class OLCB_DCC_Train
 
 
 #endif
+#endif //DO_OLCB_DCC_TRAIN

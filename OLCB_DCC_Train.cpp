@@ -1,3 +1,5 @@
+#ifdef DO_OLCB_DCC_TRAIN
+
 #include "OLCB_DCC_Train.h"
 #include "float16.h"
 
@@ -153,3 +155,5 @@ bool OLCB_DCC_Train::handleSetSpeedDatagram(OLCB_Datagram *datagram)
 	
 	return false;
 }
+
+#endif

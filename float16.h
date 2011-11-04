@@ -2,7 +2,10 @@
 #define __FLOAT_16__
 
 #include <stdint.h>
+
+#ifdef DO_FIX16
 #include "fixmath.h"
+#endif
 
 /* data type for storing float16s */
 
@@ -35,8 +38,10 @@ _float16_shape_type float32_to_float16(float f32_val);
 
 float float16_to_float32(_float16_shape_type f16_val);
 
+#ifdef DO_FIX16
 // But I wrote this one.
 fix16_t float16_to_fix16(_float16_shape_type f16_val);
+#endif
 
 #ifdef __cplusplus
 }
