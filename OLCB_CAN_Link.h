@@ -70,7 +70,7 @@ class OLCB_CAN_Alias_Helper
     	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
     	{
     		_nodes[i].alias = 0;
-    		_nodes[i].node = NULL;
+    		_nodes[i].node = 0;
     		_nodes[i].state = ALIAS_EMPTY_STATE;
     	}
     }
