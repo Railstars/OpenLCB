@@ -2,7 +2,7 @@
 #define __OLCB_DATAGRAM_HANDLER__
 
 #include <string.h>
-#include "WProgram.h"
+#include "Arduino.h"
 #include "OLCB_Link.h"
 #include "OLCB_Virtual_Node.h"
 #include "OLCB_Datagram.h"

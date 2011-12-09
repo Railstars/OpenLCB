@@ -2,7 +2,7 @@
 #define __OLCB_EVENT_H__
 
 #include <stdint.h>
-#include "WProgram.h"
+#include "Arduino.h"
 
 class OLCB_Event {
   public: 

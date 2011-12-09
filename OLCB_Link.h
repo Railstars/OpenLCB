@@ -2,7 +2,7 @@
 #define __OLCB_LINK_H__
 
 #include <stdint.h>
-#include "WProgram.h"
+#include "Arduino.h"
 #include "can.h"
 #include "OLCB_Event.h"
 #include "OLCB_Virtual_Node.h"

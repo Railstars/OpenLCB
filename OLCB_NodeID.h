@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define OLCB_DEBUG
-#include "WProgram.h"
+#include "Arduino.h"
 
 class OLCB_NodeID {
   public:

@@ -8,7 +8,7 @@
 #ifndef OLCB_EVENT_HANDLER_H_
 #define OLCB_EVENT_HANDLER_H_
 
-#include "WProgram.h"
+#include "Arduino.h"
 #include "OLCB_NodeID.h"
 #include "OLCB_Event.h"
 #include "OLCB_Link.h"

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "can.h"
-#include "WProgram.h"
+#include "Arduino.h"
 #include "OLCB_Link.h"
 #include "OLCB_CAN_Buffer.h"
 #include "OLCB_NodeID.h"

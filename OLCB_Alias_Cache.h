@@ -6,7 +6,7 @@ class OLCB_Alias_Cache;
 #if defined(__AVR__)
 #include <stdlib.h>
 #if defined(OLCB_DEBUG)
-#include "WProgram.h"
+#include "Arduino.h"
 #endif
 #endif
 
