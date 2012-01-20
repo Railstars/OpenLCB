@@ -2,7 +2,7 @@
 #define __OLCB_EVENT_H__
 
 #include <stdint.h>
-#include "Arduino.h"
+#include "WProgram.h"
 
 class OLCB_Event {
   public: 
@@ -67,6 +67,11 @@ class OLCB_Event {
           if (*this == *(array+i)) return i;
       }
       return -1;
+  }
+  
+  bool isEmpty(void)
+  {
+  	return(!(val[0]|val[1]|val[2]|val[3]|val[4]|val[5]|val[6]|val[7]);
   }
   
   void print(void)
