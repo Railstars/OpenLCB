@@ -40,7 +40,7 @@ class OLCB_Virtual_Node : public OLCB_Handler
       }
       return false;
   }
-  
+
   bool isPermitted(void)
   {
   	if(NID)

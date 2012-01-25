@@ -25,11 +25,6 @@ bool OLCB_Datagram_Handler::isDatagramSent(void)
 
 bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 {
-	if(!isPermitted)
-	{
-		return false;
-	}
-	
     //First, make sure we are dealing with a datagram.
     if(!frame->isDatagram())
     {

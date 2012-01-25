@@ -23,7 +23,6 @@ class OLCB_Handler
 		return false;
 	}
 
-  	
   	OLCB_Link *_link;
 	OLCB_NodeID *NID;
 };

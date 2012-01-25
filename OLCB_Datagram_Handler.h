@@ -41,11 +41,11 @@ class OLCB_Datagram_Handler : public OLCB_Handler
  protected:
  
  //TODO condense all these bools into a bitfield
-  uint32_t _sentTime;
 //  bool _initialized;
-  bool _txFlag;
   bool _rxDatagramBufferFree;
   bool _txDatagramBufferFree;
+  uint32_t _sentTime;
+  bool _txFlag;
   uint8_t _loc;
   
   OLCB_Datagram *_rxDatagramBuffer;
