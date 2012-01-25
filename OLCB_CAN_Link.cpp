@@ -1,4 +1,5 @@
 #include "OLCB_CAN_Link.h"
+#include "Arduino.h"
 //Code taken from LinkControl.cpp
 
 
@@ -144,6 +145,7 @@ void OLCB_CAN_Link::update(void)
   // coming from the CAN bus
   if(can_get_message(&rxBuffer))
   {
+  	Serial.println("CAN_Link: message from bus");
   	internalMessage = false;
 	deliverMessage();
   }
@@ -400,6 +402,7 @@ bool OLCB_CAN_Link::sendMessage()
     //now, send it to us!
     internalMessage = true;
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
+	Serial.println("Delivering message internally");
     deliverMessage(); //send the message to local nodes
     
     return true;

@@ -49,6 +49,12 @@ class OLCB_NodeID {
   }
   
   //***********TODO THERE IS A SERIOUS ISSUE HERE THAT I AM HAVING PROBLEMS DEBUGGING!!!
+  //For some reason, once the alias check falls through (and it does when one or both aliases are 0, which means no alias has been assigned), then we return '0' when the NodeID's differ, but for whatever crazy stupid reason, putting that in an if statement causes it to be executed.
+  //That is, assume that NodeID1 and NodeID2 are distinct NodeIDs, and that one or the other hasn't had an alias assigned.
+  //Suppose we have this code:
+  //if(NodeID1 == NodeID2) {do crap};
+  //Then, although this operator will properly return 0, crap gets done anyway. Which is deeply disturbing to me.
+  //In other words, DO NOT RELY ON THIS METHOD IT DOES NOT WORK!
   bool operator==(const OLCB_NodeID &other) const
   { 
     //first, check the aliases. Only pay them heed if they both are non-zero.
@@ -73,13 +79,13 @@ class OLCB_NodeID {
 //        Serial.println((val[0]==other.val[0])&&(val[1]==other.val[1])
 //          &&(val[2]==other.val[2])&&(val[3]==other.val[3])
 //          &&(val[4]==other.val[4])&&(val[5]==other.val[5]), DEC);
-    return  (val[0]==other.val[0])&&(val[1]==other.val[1])
+    return((val[0]==other.val[0])&&(val[1]==other.val[1])
           &&(val[2]==other.val[2])&&(val[3]==other.val[3])
-          &&(val[4]==other.val[4])&&(val[5]==other.val[5]);
+          &&(val[4]==other.val[4])&&(val[5]==other.val[5]));
     }
   }
   
-    bool sameNID(const OLCB_NodeID &other) const
+bool sameNID(const OLCB_NodeID &other) const
   { 
     return  (val[0]==other.val[0])&&(val[1]==other.val[1])
           &&(val[2]==other.val[2])&&(val[3]==other.val[3])

@@ -309,10 +309,30 @@ void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
+	//Serial.println("Allocating Alias for:");
+	//nodeID->print();
 	nodeID->initialized = false;
 	private_nodeID_t *slot = 0;
+	//first, see if this NodeID is already in our list, and if so, don't worry about it.TODO
+	uint8_t i;
+	for(i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	{
+		//_nodes[i].node->print();
+		//Check the nodes manually, because OLCB_NodeID::operator== is broken!?
+		//Could use OLCB_NodeID::sameNID()?
+		if( (_nodes[i].node->val[0] == nodeID->val[0]) &&
+		(_nodes[i].node->val[1] == nodeID->val[1]) &&
+		(_nodes[i].node->val[2] == nodeID->val[2]) &&
+		(_nodes[i].node->val[3] == nodeID->val[3]) &&
+		(_nodes[i].node->val[4] == nodeID->val[4]) &&
+		(_nodes[i].node->val[5] == nodeID->val[5]) ) //the are the same!
+		{
+			//Serial.println("No need to add duplicate NodeID to alias list");
+			return;
+		}
+	}
 	//find a location for this nodeID in our list
-	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	for(i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
 		if(_nodes[i].state == ALIAS_HOLDING_STATE)
 		{
