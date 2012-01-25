@@ -114,6 +114,11 @@ bool OLCB_Event_Handler::consume(OLCB_Event *event)
 /* Protocol level interactions for every kind of virtual node */
 bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 {
+	if(!isPermitted())
+	{
+		return false;
+	}
+	
 	Serial.println("Event handler handling message!");
     bool retval = false;
     //first, check to see if it is an event
