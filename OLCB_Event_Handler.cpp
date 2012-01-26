@@ -86,6 +86,8 @@ void OLCB_Event_Handler::loadEvents(OLCB_Event* events, uint16_t numEvents)
 
 bool OLCB_Event_Handler::produce(uint16_t index) //OLCB_Event *event) //call to produce an event with ID = EID
 {
+	Serial.print("Producing ");
+	Serial.println(index);
 	bool retval = false;
 //	int8_t index = 0;
 //	while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))

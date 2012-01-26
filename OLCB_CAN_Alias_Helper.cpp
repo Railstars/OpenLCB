@@ -273,16 +273,18 @@ void OLCB_CAN_Alias_Helper::update(void)
 				}
 				break;
 			case ALIAS_AMD_STATE:
-				//Serial.println("sending AMD");
-				//_nodes[index].node->print();
+				Serial.println("sending AMD");
+				_nodes[index].node->print();
 
 				_nodes[index].state = ALIAS_READY_STATE;
 				if(!_link->sendAMD(_nodes[index].node))
 				{
+					Serial.println("Couldn't send AMD, will try again");
 					_nodes[index].state = ALIAS_AMD_STATE;
 				}
 				else
 				{
+					Serial.println("Done! setting initialized to true");
 					_nodes[index].node->initialized = true;
 				}
 				break;
@@ -309,28 +311,20 @@ void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
-	//Serial.println("Allocating Alias for:");
-	//nodeID->print();
-	nodeID->initialized = false;
+	Serial.println("Allocating Alias for:");
+	nodeID->print();
 	private_nodeID_t *slot = 0;
 	//first, see if this NodeID is already in our list, and if so, don't worry about it.TODO
 	uint8_t i;
 	for(i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
-		//_nodes[i].node->print();
-		//Check the nodes manually, because OLCB_NodeID::operator== is broken!?
-		//Could use OLCB_NodeID::sameNID()?
-		if( (_nodes[i].node->val[0] == nodeID->val[0]) &&
-		(_nodes[i].node->val[1] == nodeID->val[1]) &&
-		(_nodes[i].node->val[2] == nodeID->val[2]) &&
-		(_nodes[i].node->val[3] == nodeID->val[3]) &&
-		(_nodes[i].node->val[4] == nodeID->val[4]) &&
-		(_nodes[i].node->val[5] == nodeID->val[5]) ) //the are the same!
+		if(nodeID == _nodes[i].node) //should point to same thing if same NID
 		{
-			//Serial.println("No need to add duplicate NodeID to alias list");
+			Serial.println("No need to add duplicate NodeID to alias list");
 			return;
 		}
 	}
+	nodeID->initialized = false;
 	//find a location for this nodeID in our list
 	for(i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{

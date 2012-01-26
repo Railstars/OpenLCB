@@ -316,11 +316,17 @@ bool OLCB_CAN_Link::sendAMR(OLCB_NodeID *nid)
 
 bool OLCB_CAN_Link::sendAMD(OLCB_NodeID *nid)
 {
+	Serial.println("sendAMD");
   if(!can_check_free_buffer())
+  {
+  	Serial.println("no free buffer");
     return false;
+  }
+  Serial.println("Preparing for TX");
   txBuffer.init(nid);
   txBuffer.setAMD(nid);
   while(!sendMessage());
+  Serial.println("TX Done!");
   return true;
 }
 
@@ -395,9 +401,12 @@ bool OLCB_CAN_Link::sendMessage()
 	//ASSUMPTION! We are assuming that the message to send has been stashed safely in txBuffer! This might not be true, in which case the behavior of this method is undefined.
 	if(!can_check_free_buffer())
 	{
+		Serial.println("sendMessage: no free buffer");
         return false;
     }
+    Serial.println("sendMessage: Prepping for TX");
     while(!can_send_message(&txBuffer));
+    Serial.println("sendMessage: TX complete");
     
     //now, send it to us!
     internalMessage = true;
