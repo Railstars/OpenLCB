@@ -145,7 +145,6 @@ void OLCB_CAN_Link::update(void)
   // coming from the CAN bus
   if(can_get_message(&rxBuffer))
   {
-  	Serial.println("CAN_Link: message from bus");
   	internalMessage = false;
 	deliverMessage();
   }
@@ -316,18 +315,19 @@ bool OLCB_CAN_Link::sendAMR(OLCB_NodeID *nid)
 
 bool OLCB_CAN_Link::sendAMD(OLCB_NodeID *nid)
 {
-	Serial.println("sendAMD");
   if(!can_check_free_buffer())
-  {
-  	Serial.println("no free buffer");
     return false;
-  }
-  Serial.println("Preparing for TX");
   txBuffer.init(nid);
   txBuffer.setAMD(nid);
   while(!sendMessage());
-  Serial.println("TX Done!");
   return true;
+}
+
+
+bool OLCB_CAN_Link::sendIdent(void)
+{
+	OLCB_Event e(0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x00);
+	return sendPCER(&e);
 }
 
 bool OLCB_CAN_Link::sendPCER(OLCB_Event *event)
@@ -401,17 +401,17 @@ bool OLCB_CAN_Link::sendMessage()
 	//ASSUMPTION! We are assuming that the message to send has been stashed safely in txBuffer! This might not be true, in which case the behavior of this method is undefined.
 	if(!can_check_free_buffer())
 	{
-		Serial.println("sendMessage: no free buffer");
+		//Serial.println("sendMessage: no free buffer");
         return false;
     }
-    Serial.println("sendMessage: Prepping for TX");
+    //Serial.println("sendMessage: Prepping for TX");
     while(!can_send_message(&txBuffer));
-    Serial.println("sendMessage: TX complete");
+    //Serial.println("sendMessage: TX complete");
     
     //now, send it to us!
     internalMessage = true;
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
-	Serial.println("Delivering message internally");
+	//Serial.println("Delivering message internally");
     deliverMessage(); //send the message to local nodes
     
     return true;

@@ -29,6 +29,8 @@ class OLCB_Link
   virtual bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request)  {return false;}
   virtual bool sendVerifyNID(OLCB_NodeID *src) {return false;} //global version
     
+  virtual bool sendIdent(void) {return false;}
+    
   virtual bool sendPCER(OLCB_Event *event) {return true;}
   
   virtual uint8_t sendDatagramFragment(OLCB_Datagram *datagram, uint8_t start) {return 0;}

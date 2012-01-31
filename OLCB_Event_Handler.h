@@ -42,6 +42,9 @@ public:
 
     /* I don't understand what this method does, so I just copied it directly */
     void newEvent(int index, bool p, bool c);
+    
+    void markToLearn(int index, bool mark);
+    void sendTeach(int index);
 
 
 protected:

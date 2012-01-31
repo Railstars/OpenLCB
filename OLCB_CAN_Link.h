@@ -121,6 +121,7 @@ class OLCB_CAN_Link : public OLCB_Link
     /*Methods for handling nida caching TODO THESE NEED UPDATING!!*/
   bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request);
 
+  bool sendIdent(void);
   
   bool sendPCER(OLCB_Event *event);
   bool sendConsumerIdentified(OLCB_Event *event);
