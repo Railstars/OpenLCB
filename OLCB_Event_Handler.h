@@ -44,6 +44,7 @@ public:
     void newEvent(int index, bool p, bool c);
     
     void markToLearn(int index, bool mark);
+    void markToTeach(int index, bool mark);
     void sendTeach(int index);
 
 

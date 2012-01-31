@@ -284,6 +284,14 @@ void OLCB_Event_Handler::markToLearn(int index, bool mark)
         _events[index].flags &= ~LEARN_FLAG;
 }
 
+void OLCB_Event_Handler::markToTeach(int index, bool mark)
+{
+    if (mark)
+        _events[index].flags |= TEACH_FLAG;
+    else
+        _events[index].flags &= ~TEACH_FLAG;
+}
+
 void OLCB_Event_Handler::sendTeach(int index)
 {
     _events[index].flags |= TEACH_FLAG;
