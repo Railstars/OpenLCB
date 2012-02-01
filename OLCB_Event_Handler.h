@@ -35,7 +35,7 @@ public:
     bool produce(uint16_t index); //OLCB_Event *event); //call to produce an event with ID = EID
 
     //this method should be overridden to handle the consumption of events.
-    virtual bool consume(OLCB_Event *event);
+    virtual bool consume(uint16_t index);
 
     /* Protocol level interactions for every kind of virtual node */
     bool handleMessage(OLCB_Buffer *buffer);

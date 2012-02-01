@@ -105,7 +105,7 @@ bool OLCB_Event_Handler::produce(uint16_t index) //OLCB_Event *event) //call to 
 
 //this method should be overridden to handle the consumption of events.
 //return true if we were able to successfully consume the event, false otherwise
-bool OLCB_Event_Handler::consume(OLCB_Event *event)
+bool OLCB_Event_Handler::consume(uint16_t index)
 {
     return false;
 }
@@ -178,13 +178,21 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
 {
     bool retval = false;
     int16_t index = 0;
+    Serial.println("Received PCER");
+      	for(uint8_t j = 0; j < 7; ++j)
+	{
+		Serial.print(event->val[j]);
+		Serial.print(" : ");
+	}
+	Serial.println(event->val[7]);
+	Serial.println("Checking to see if we can consume");
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
         if (_events[index].flags & OLCB_Event::CAN_CONSUME_FLAG)
         {
-//        	//Serial.println("Consuming event");
+        	Serial.println("Yes, calling consume()");
             // yes, notify our own code
-            if(consume(event))
+            if(consume(index))
             {
                 retval = true;
             }
@@ -195,6 +203,8 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
             break;
         }
     }
+    if(false)
+    	Serial.println("No");
     return retval;
 }
 
@@ -242,12 +252,28 @@ bool OLCB_Event_Handler::handleIdentifyConsumers(OLCB_Event *event)
 
 bool OLCB_Event_Handler::handleLearnEvent(OLCB_Event *event)
 {
+	Serial.println("Received Learn Event!");
+	for(uint8_t j = 0; j < 7; ++j)
+	{
+		Serial.print(event->val[j]);
+		Serial.print(" : ");
+	}
+	Serial.println(event->val[7]);
+	
     bool save = false;
     for (uint16_t i=0; i<_numEvents; ++i)
     {
         if ( (_events[i].flags & LEARN_FLAG ) != 0 )
         {
+        	Serial.print("Found a flagged p/c at index ");
+        	Serial.println(i, DEC);
             memcpy(_events[i].val, event->val, 8);
+            for(uint8_t j = 0; j < 7; ++j)
+			{
+				Serial.print(_events[i].val[j]);
+				Serial.print(" : ");
+			}
+			Serial.println(_events[i].val[7]);
             _events[i].flags |= IDENT_FLAG; // notify new eventID
             _events[i].flags &= ~LEARN_FLAG; // enough learning
             _sendEvent = min(_sendEvent, i);
@@ -259,6 +285,7 @@ bool OLCB_Event_Handler::handleLearnEvent(OLCB_Event *event)
     {
         store(); //TODO check for success here!
     }
+    Serial.println("====");
     return save;
 }
 
@@ -281,9 +308,9 @@ void OLCB_Event_Handler::newEvent(int index, bool p, bool c)
 
 void OLCB_Event_Handler::markToLearn(int index, bool mark)
 {
-	//Serial.println("Mark to Learn:");
-	//Serial.println(index,DEC);
-	//Serial.println(mark,DEC);
+	Serial.println("Mark to Learn:");
+	Serial.println(index,DEC);
+	Serial.println(mark,DEC);
     if (mark)
         _events[index].flags |= LEARN_FLAG;
     else
