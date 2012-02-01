@@ -47,7 +47,6 @@ public:
     void markToTeach(int index, bool mark);
     bool markedToLearn(int index);
     bool markedToTeach(int index);
-    void sendTeach(int index);
 
 
 protected:
