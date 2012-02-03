@@ -68,56 +68,41 @@ bool OLCB_CAN_Link::handleTransportLevel()
       // check address
       OLCB_NodeID n;
       rxBuffer.getNodeID(&n);
-      // if (n == *_nodeID) //if the verification matches our nodeID, respond
-//       {
-//         // reply; should be threaded, but isn't
-//         sendVerifiedNID(_nodeID);
-//         return true;
-//       }
-//       else //it might yet match a virtual NID; check each handler to see
-//       {
-//         bool flag = false;
-        //check all handlers, not just datagram handlers
-        OLCB_Virtual_Node *iter = _handlers;
-        while(iter)
-        {
-          if(iter->verifyNID(&n))
-          {
-          	//Serial.println("sending VerifiedID");
-          	//iter->NID->print();
-            sendVerifiedNID(iter->NID);
-            break;
-          }
-          else
-          {
-            iter = iter->next;
-          }
-        }
-//      }
-      return true;
+	  //check all handlers
+	  OLCB_Virtual_Node *iter = _handlers;
+	  while(iter)
+	  {
+	    if(iter->verifyNID(&n))
+	    {
+		  sendVerifiedNID(iter->NID);
+		  break; //only send one!
+	    }
+	    else
+	    {
+		  iter = iter->next;
+	    }
+	  }
+    return true;
     }
     // Maybe this is a global Verify request, in which case we have a lot of packets to send!
     else if (rxBuffer.isVerifyNIDglobal()) {
       // reply to global request
-      // ToDo: This should be threaded
-      //sendVerifiedNID(_nodeID);
       //and again for all virtual nodes
       OLCB_Virtual_Node *iter = _handlers;
       while(iter != NULL)
       {
-        if(iter->verifyNID(iter->NID))
-        {
-          //Serial.println("sending VerifiedID (global)");
-    	  //iter->NID->print();
+      	//TODO check to make sure we're not sending the same VerifiedID message more than once!?
+//        if(iter->verifyNID(iter->NID))
+//        {
           sendVerifiedNID(iter->NID);
-        }
+//        }
         iter = iter->next;
       }
       return true;
     }
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
     else if (rxBuffer.isVerifiedNID()) {
-    // We have a packet that contains a verified NID. We might have requested this. Let's check.
+      // We have a packet that contains a verified NID. We might have requested this. Let's check.
       OLCB_NodeID n;
       rxBuffer.getSourceNID(&n); //get the alias from the message header
       rxBuffer.getNodeID(&n); //Get the actual NID from the message body
@@ -360,23 +345,15 @@ bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
 }
 
 bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
-{
-	//Serial.println("sendProducerIdentified");
-    
+{    
     if(!can_check_free_buffer())
     {
-    	//Serial.println("    no free buffer");
         return false;
     }
-
-	//Serial.println("    s1");
     txBuffer.setProducerIdentified(event);
-    //Serial.println("    s2");
     while(!sendMessage())
     {
-    	//Serial.println("    s3");
     }
-    //Serial.println("    s4");
     return true;
 }
 
@@ -384,8 +361,6 @@ bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
-//	Serial.println("Adding Vnode:");
-//	vnode->NID->print();
 	OLCB_Link::addVNode(vnode);
 	_aliasHelper.allocateAlias(vnode->NID);
 }
@@ -401,17 +376,13 @@ bool OLCB_CAN_Link::sendMessage()
 	//ASSUMPTION! We are assuming that the message to send has been stashed safely in txBuffer! This might not be true, in which case the behavior of this method is undefined.
 	if(!can_check_free_buffer())
 	{
-		//Serial.println("sendMessage: no free buffer");
         return false;
     }
-    //Serial.println("sendMessage: Prepping for TX");
     while(!can_send_message(&txBuffer));
-    //Serial.println("sendMessage: TX complete");
     
     //now, send it to us!
     internalMessage = true;
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
-	//Serial.println("Delivering message internally");
     deliverMessage(); //send the message to local nodes
     
     return true;

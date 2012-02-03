@@ -85,17 +85,16 @@ class OLCB_NodeID {
     }
   }
   
-bool sameNID(const OLCB_NodeID &other) const
+bool sameNID(const OLCB_NodeID *other) const
   { 
-    return  (val[0]==other.val[0])&&(val[1]==other.val[1])
-          &&(val[2]==other.val[2])&&(val[3]==other.val[3])
-          &&(val[4]==other.val[4])&&(val[5]==other.val[5]);
+    return  (val[0]==other->val[0])&&(val[1]==other->val[1])
+          &&(val[2]==other->val[2])&&(val[3]==other->val[3])
+          &&(val[4]==other->val[4])&&(val[5]==other->val[5]);
   }
   
   bool operator!=(const OLCB_NodeID &other) const
   {
-  	Serial.println("!=: calling ==");
-    return !(*this == other);
+  	return !(*this == other);
   }
   
   bool empty(void)

@@ -1,4 +1,5 @@
 #include "OLCB_CAN_Buffer.h"
+#include "Arduino.h"
 
 
 //  void OLCB_CAN_Buffer::init(uint16_t alias) {
@@ -271,10 +272,6 @@
     _destination.copy(nid);
   }
   
-  bool OLCB_CAN_Buffer::isVerifyNID() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID);
-  }
-  
   void OLCB_CAN_Buffer::setVerifyNID(OLCB_NodeID* nid)
   {
 //    init(nodeAlias);
@@ -283,9 +280,16 @@
     memcpy(data, nid->val, 6);
   }
 
-  bool OLCB_CAN_Buffer::isVerifyNIDglobal() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID_GLOBAL);
+  bool OLCB_CAN_Buffer::isVerifyNID() {
+      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID);
   }
+
+  bool OLCB_CAN_Buffer::isVerifyNIDglobal() {
+      if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
+      if (length == 0) return false;
+      if (data[0] != MTI_VERIFY_NID_GLOBAL) return false;
+      return true;
+  }  
   
   bool OLCB_CAN_Buffer::isVerifiedNID()
   {
