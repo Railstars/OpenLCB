@@ -20,19 +20,6 @@
 
 
 /**
- * OpenLCB CAN MTI format (3 bits)
- */
-#define MTI_FORMAT_SIMPLE_MTI               0    
-#define MTI_FORMAT_COMPLEX_MTI              1
-//
-//
-#define MTI_FORMAT_ADDRESSED_DATAGRAM       4    
-#define MTI_FORMAT_ADDRESSED_DATAGRAM_LAST  5    
-#define MTI_FORMAT_ADDRESSED_NON_DATAGRAM   6    
-#define MTI_FORMAT_STREAM_CODE              7    
-
-
-/**
  * Basic 12-bit header MTI definitions for OpenLCB on CAN.
  * See the MtiAllocations.ods document for allocations.
  *

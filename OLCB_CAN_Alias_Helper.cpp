@@ -441,3 +441,30 @@ void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
 	//move it into the allocated, but waiting state
 	slot->state = ALIAS_HOLDING_STATE;
 }
+
+void OLCB_CAN_Alias_Helper::verifyNID(OLCB_NodeID* nodeID)
+{
+	//A couple of possibilities here. Either nodeID is empty, in which case we should send a verified nid for all our nids, or it's not, in which case we should only send one
+	if(nodeID->empty())
+	{
+		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+		{
+			if(_nodes[i].alias)
+			{
+				_link->sendVerifiedNID(_nodes[i].node);
+			}
+		}
+	}
+	else //not empty TODO
+	{
+//		nodeID->print();
+		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+		{
+			if(_nodes[i].alias && nodeID->sameNID(_nodes[i].node))
+			{
+				_link->sendVerifiedNID(_nodes[i].node);
+				break;
+			}
+		}
+	}
+}

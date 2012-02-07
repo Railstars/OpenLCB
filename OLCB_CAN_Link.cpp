@@ -63,47 +63,19 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
 
 bool OLCB_CAN_Link::handleTransportLevel()
 {
+	OLCB_NodeID n;
     // see if this is a Verify request to us; first check type
-    if (rxBuffer.isVerifyNID()) {
+    if (rxBuffer.isVerifyNID() || rxBuffer.isVerifyNIDglobal())
+    {
       // check address
-      OLCB_NodeID n;
       rxBuffer.getNodeID(&n);
-	  //check all handlers
-	  OLCB_Virtual_Node *iter = _handlers;
-	  while(iter)
-	  {
-	    if(iter->verifyNID(&n))
-	    {
-		  sendVerifiedNID(iter->NID);
-		  break; //only send one!
-	    }
-	    else
-	    {
-		  iter = iter->next;
-	    }
-	  }
-    return true;
-    }
-    // Maybe this is a global Verify request, in which case we have a lot of packets to send!
-    else if (rxBuffer.isVerifyNIDglobal()) {
-      // reply to global request
-      //and again for all virtual nodes
-      OLCB_Virtual_Node *iter = _handlers;
-      while(iter != NULL)
-      {
-      	//TODO check to make sure we're not sending the same VerifiedID message more than once!?
-//        if(iter->verifyNID(iter->NID))
-//        {
-          sendVerifiedNID(iter->NID);
-//        }
-        iter = iter->next;
-      }
+      //pass it off to the alias helper, since it maintains a definitive list of registered nodeIDs
+      _aliasHelper.verifyNID(&n);
       return true;
     }
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
     else if (rxBuffer.isVerifiedNID()) {
       // We have a packet that contains a verified NID. We might have requested this. Let's check.
-      OLCB_NodeID n;
       rxBuffer.getSourceNID(&n); //get the alias from the message header
       rxBuffer.getNodeID(&n); //Get the actual NID from the message body
       if(n.alias == 0) return false;

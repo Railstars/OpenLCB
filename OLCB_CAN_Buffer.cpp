@@ -234,16 +234,16 @@
   }
   
   //This is used for VerifyID, and presumes that the NID to verify is contained in the first 6 bytes of the frame.
-  void OLCB_CAN_Buffer::getNodeID(OLCB_NodeID* nid) {
-    memcpy(nid->val, data, 6);
-    //nid->print();
-    //nid->val[0] = data[0];
-    //nid->val[1] = data[1];
-    //nid->val[2] = data[2];
-    //nid->val[3] = data[3];
-    //nid->val[4] = data[4];
-    //nid->val[5] = data[5];
-    //nid->alias = getSourceAlias();
+  //TODO if it's an addressed verifyID, need to offset by 1!
+  void OLCB_CAN_Buffer::getNodeID(OLCB_NodeID* nid)
+  {
+  	//FIX THIS!!! Need to make sure that there is really enough data to pull!
+  	uint8_t start = 0;
+  	if(isVerifyNIDglobal())
+  		start = 1;
+//  	if(length >= 6+start)
+	memcpy(nid->val, data+start, 6);
+	// else just rely on the nid having been initialized to some value, which it will have been; by default 0.0.0.0.0.0
   }
   
   bool OLCB_CAN_Buffer::getDestinationNID(OLCB_NodeID *nid)
@@ -379,14 +379,14 @@
   {
     if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
       return false;
-    return (data[0] == (MTI_DATAGRAM_RCV_OK>>4)&0xFF );
+    return (data[0] == ((MTI_DATAGRAM_RCV_OK>>4)&0xFF) );
   }
   
   bool OLCB_CAN_Buffer::isDatagramNak()
   {
     if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
       return false;
-    return (data[0] == (MTI_DATAGRAM_REJECTED>>4)&0xFF );
+    return (data[0] == ((MTI_DATAGRAM_REJECTED>>4)&0xFF) );
   }
   
   uint16_t OLCB_CAN_Buffer::getDatagramNakErrorCode()

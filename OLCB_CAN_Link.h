@@ -82,6 +82,7 @@ class OLCB_CAN_Alias_Helper
     void reAllocateAlias(private_nodeID_t* nodeID);
     bool releaseAlias(OLCB_NodeID* nodeID);
     void idleAlias(OLCB_NodeID* nodeID);
+    void verifyNID(OLCB_NodeID* nodeID);
   private:
     //methods
     //fields
