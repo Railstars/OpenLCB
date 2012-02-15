@@ -51,7 +51,6 @@
  */
 
 #define MTI_VERIFY_NID_GLOBAL           0x0A
-
 #define MTI_IDENTIFY_EVENTS_GLOBAL      0x2B
 
 #define MTI_DATAGRAM_RCV_OK             0x4C
@@ -185,6 +184,7 @@
   void setProducerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);
 
   bool isIdentifyEvents();
+  bool isIdentifyEventsGlobal();
 
   bool isDatagram();
   bool isLastDatagram();

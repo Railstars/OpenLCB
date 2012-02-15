@@ -239,7 +239,7 @@
   {
   	//FIX THIS!!! Need to make sure that there is really enough data to pull!
   	uint8_t start = 0;
-  	if(isVerifyNIDglobal())
+  	if(isVerifyNIDglobal() || isIdentifyEventsGlobal())
   		start = 1;
 //  	if(length >= 6+start)
 	memcpy(nid->val, data+start, 6);
@@ -350,6 +350,13 @@
   bool OLCB_CAN_Buffer::isIdentifyEvents() {
       return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_EVENTS);
   }
+  
+  bool OLCB_CAN_Buffer::isIdentifyEventsGlobal() {
+      if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
+      if (length == 0) return false;
+      if (data[0] != MTI_IDENTIFY_EVENTS_GLOBAL) return false;
+      return true;
+  }  
 
   void OLCB_CAN_Buffer::loadFromEid(OLCB_Event* eid) {
     memcpy(data, eid->val, 8);

@@ -145,13 +145,23 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
         retval = handleIdentifyConsumers(&event);
     }
 
-    else if(buffer->isIdentifyEvents())
+    else if(buffer->isIdentifyEvents() || buffer->isIdentifyEventsGlobal())
     {
     	//Serial.println("IdentifyEvents");
         // See if addressed to us
         OLCB_NodeID n;
-        buffer->getNodeID(&n);
-        retval = handleIdentifyEvents(&n);
+		if(buffer->isIdentifyEvents()) //addressed variant
+		{
+			buffer->getNodeID(&n);
+			if(n.empty() || NID->sameNID(&n))//addressed to us
+			{
+				retval = handleIdentifyEvents();
+			}
+		}
+		else
+		{
+	        retval = handleIdentifyEvents();
+	    }
     }
 
     else if(buffer->isLearnEvent())
@@ -164,20 +174,14 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
     return retval; //default: not something for us to handle!
 }
 
-bool OLCB_Event_Handler::handleIdentifyEvents(OLCB_NodeID *nodeid)
+bool OLCB_Event_Handler::handleIdentifyEvents(void)
 {
-    bool retval = false;
-    //Serial.println(NID->sameNID(nodeid), HEX);
-    if (NID->sameNID(nodeid)) //compare to our address
-    {
-        retval = true;
-        // if so, send _all_ ProducerIndentfied, ConsumerIdentified
-        for (int i = 0; i < _numEvents; ++i) {
-            _events[i].flags |= IDENT_FLAG;
-        }
-        _sendEvent = 0;
-    }
-    return retval;
+	for (int i = 0; i < _numEvents; ++i)
+	{
+		_events[i].flags |= IDENT_FLAG;
+	}
+	_sendEvent = 0;
+    return true;
 }
 
 bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)

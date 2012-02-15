@@ -117,9 +117,9 @@ class OLCB_CAN_Link : public OLCB_Link
   //TODO This one needs implementation!
   bool sendStream(OLCB_Stream *stream) {return false;}
   //Not sure that this is how streams should work at all!
-  
+
+  //TODO does this need to be modified!?  
   bool sendVerifiedNID(OLCB_NodeID *nid);
-    /*Methods for handling nida caching TODO THESE NEED UPDATING!!*/
   bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request);
 
   bool sendIdent(void);
