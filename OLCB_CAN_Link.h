@@ -46,10 +46,11 @@ class OLCB_CAN_Link;
 #define ALIAS_CID4_STATE 5
 #define ALIAS_RID_STATE 6
 #define ALIAS_AMD_STATE 7
-#define ALIAS_RELEASING_STATE 8
-#define ALIAS_RESENDRID_STATE 15
-#define ALIAS_SENDVERIFIEDNID_STATE 16
-#define ALIAS_READY_STATE 20	//assigned to a NodeID
+#define ALIAS_INIT_COMPLETE_STATE 8
+#define ALIAS_RELEASING_STATE 15
+#define ALIAS_RESENDRID_STATE 20
+#define ALIAS_SENDVERIFIEDNID_STATE 25
+#define ALIAS_READY_STATE 30	//assigned to a NodeID
 
 struct private_nodeID_t
 {
@@ -83,6 +84,7 @@ class OLCB_CAN_Alias_Helper
     bool releaseAlias(OLCB_NodeID* nodeID);
     void idleAlias(OLCB_NodeID* nodeID);
     void verifyNID(OLCB_NodeID* nodeID);
+    void sendAMD(OLCB_NodeID* nodeID);
   private:
     //methods
     //fields
@@ -141,9 +143,7 @@ class OLCB_CAN_Link : public OLCB_Link
   bool sendMessage(void);
   void deliverMessage(void);
 
-
-  //OLCB_CAN_Buffer txBuffer, rxBuffer;
-  OLCB_Buffer txBuffer, rxBuffer;
+  OLCB_CAN_Buffer txBuffer, rxBuffer;
   OLCB_CAN_Alias_Helper _aliasHelper;
   OLCB_Alias_Cache _translationCache;
   
@@ -172,6 +172,7 @@ class OLCB_CAN_Link : public OLCB_Link
     
   bool sendAMR(OLCB_NodeID *nid);
   bool sendAMD(OLCB_NodeID *nid);
+  bool sendAME(OLCB_NodeID *nid);
   
   bool internalMessage;
 };

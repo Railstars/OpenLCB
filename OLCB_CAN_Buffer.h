@@ -29,7 +29,7 @@
  
 #define MTI_INITIALIZATION_COMPLETE     0x087
 
-#define MTI_VERIFY_NID                  0x0A7
+#define MTI_VERIFY_NID_GLOBAL           0x0A7
 #define MTI_VERIFIED_NID                0x0B7
 
 #define MTI_IDENTIFY_CONSUMERS          0x24F
@@ -46,15 +46,23 @@
 #define MTI_PC_EVENT_REPORT             0x2DF
 
 /**
- * baseic 8-bit Message Type byte values (from data[0])
+ * basic 8-bit Message Type byte values (from data[0])
  * for addressed messages.
  */
 
-#define MTI_VERIFY_NID_GLOBAL           0x0A
-#define MTI_IDENTIFY_EVENTS_GLOBAL      0x2B
+#define MTI_VERIFY_NID_ADDRESSED           0x0A
+#define MTI_IDENTIFY_EVENTS_ADDRESSED      0x2B
 
 #define MTI_DATAGRAM_RCV_OK             0x4C
 #define MTI_DATAGRAM_REJECTED           0x4D
+
+/**
+ * basic 16-bit Message Type byte values (from data[0,1])
+ * for addressed messages.
+ */
+
+#define MTI_PROTOCOL_SUPPORT_INQUIRY	0x32E4
+#define MTI_PROTOCOL_SUPPORT_REPLY		0x32F4
 
 
 //from CanFrameTransferS
@@ -97,8 +105,17 @@
  class OLCB_CAN_Buffer : public tCAN {
   public: 
   
+  //access to payload
+  uint8_t * getData(void);
+  uint8_t getLength(void);
+  void setLength(uint8_t length);
+  void setData(uint8_t *bytes, uint8_t length);
+  void setDataByte(uint8_t byte, uint8_t position);
+
+  
   // Initialize a buffer for transmission
   void init(OLCB_NodeID *sourceID);
+  void init(uint16_t alias);
   
   // start of basic message structure
 
@@ -131,6 +148,9 @@
   
   void setAMD(OLCB_NodeID *nid);
   bool isAMD(void);
+  
+  void setAME(OLCB_NodeID *nid);
+  bool isAME(void);
 
   // end of CAN-level messages
   
@@ -147,55 +167,77 @@
   bool isOpenLcbMTI(uint16_t fmt, uint16_t mti);
   bool isOpenLcbMTI(uint16_t fmt);
   
-  // end of OpenLCB format support
-  
-  // start of OpenLCB messages
-  
-  void setInitializationComplete(OLCB_NodeID* nid);
-  bool isInitializationComplete();
-
-  void setPCEventReport(OLCB_Event* eid);
-  bool isPCEventReport();
-  
-  void setLearnEvent(OLCB_Event* eid);
-  bool isLearnEvent();
-  
-  void getEventID(OLCB_Event* evt);
-  void getNodeID(OLCB_NodeID* nid);
-  
-  bool isVerifyNID();
-  bool isVerifyNIDglobal();
-  void setVerifyNID(OLCB_NodeID* nid);
-  void setVerifiedNID(OLCB_NodeID* nid);
-  bool isVerifiedNID();
-
-  bool isIdentifyConsumers();
-  
-  void setConsumerIdentified(OLCB_Event* eid);
-  
-  // Mask uses an OLCB_Event data structure; 1 bit means mask out when routing
-  void setConsumerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);
-
-  bool isIdentifyProducers();
-
-  void setProducerIdentified(OLCB_Event* eid);
-
-  // Mask uses an OLCB_Event data structure; 1 bit means mask out when routing
-  void setProducerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);
-
-  bool isIdentifyEvents();
-  bool isIdentifyEventsGlobal();
-
-  bool isDatagram();
-  bool isLastDatagram();
-  bool isDatagramAck();
-  bool isDatagramNak();
-  uint16_t getDatagramNakErrorCode();
-  
   bool getDestinationNID(OLCB_NodeID *nid);
   void setDestinationNID(OLCB_NodeID *nid);
   
-//  unsigned int getAlias() {return nodeAlias;}
+  // end of OpenLCB format support
+  
+  // start of OpenLCB messages
+
+  // basic messages  
+  bool isInitializationComplete(void);
+  void setInitializationComplete(OLCB_NodeID* nid);
+
+  bool isVerifyNIDGlobal(void);
+  bool isVerifyNIDAddressed(void);
+  void setVerifyNID(OLCB_NodeID* nid);  //use nid=0.0.0.0.0.0 to  send global
+  
+  bool isVerifiedNID(void);
+  void setVerifiedNID(OLCB_NodeID* nid);
+  
+
+  // event related messages
+  void getEventID(OLCB_Event* evt);
+  void getNodeID(OLCB_NodeID* nid);
+
+  bool isPCEventReport(void);
+  void setPCEventReport(OLCB_Event* eid);
+  
+  bool isLearnEvent(void);
+  void setLearnEvent(OLCB_Event* eid);
+
+  bool isIdentifyConsumers(void);
+  void setIdentifyConsumers(OLCB_Event* evt);
+  
+  bool isConsumerIdentified(void);
+  bool isConsumerIdentifiedRange(void);
+  void setConsumerIdentified(OLCB_Event* eid);
+  void setConsumerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);   // Mask uses an OLCB_Event data structure; 1 bit means mask out when routing
+
+
+  bool isIdentifyProducers(void);
+  bool setIdentifyProducers(OLCB_Event* evt);
+
+  bool isProducerIdentified(void);
+  bool isProducerIdentifiedRange(void);
+  void setProducerIdentified(OLCB_Event* eid);
+  // Mask uses an OLCB_Event data structure; 1 bit means mask out when routing
+  void setProducerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask);
+
+  bool isIdentifyEvents(void);
+  bool isIdentifyEventsAddressed(void);
+  bool setIdentifyEvents(OLCB_NodeID* nid); //use nid=0.0.0.0.0.0 to  send global
+
+
+// datagram related messages
+  bool isDatagram(void);
+  bool isLastDatagram(void);
+  bool isDatagramAck(void);
+  bool isDatagramNak(void);
+  void setDatagram(void);
+  void setLastDatagram(void);
+  void setDatagramAck(void);
+  void setDatagramNak(void);
+  uint16_t getDatagramNakErrorCode(void);
+  
+ //PIP messages
+  bool isProtocolSupportInquiry(void);
+  
+  
+  void setInternal(void) {internal = true;}
+  void setExternal(void) {internal = false;}
+  bool isInternal(void) {return internal;}
+  bool isExternal(void) {return !internal;}
   
   private: 
 //  unsigned int nodeAlias;   // Initialization complete sets, all later use
@@ -206,6 +248,7 @@
   //TO BE MADE USE OF LATER. belong in OLCB_CAN_Buffer.
   OLCB_NodeID _source;
   OLCB_NodeID _destination;
+  bool internal;
 };
 
 #endif

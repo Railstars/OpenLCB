@@ -1,19 +1,43 @@
 #include "OLCB_CAN_Buffer.h"
 #include "Arduino.h"
 
+  uint8_t* OLCB_CAN_Buffer::getData(void)
+  {
+  	return data;
+  }
+  
+  uint8_t OLCB_CAN_Buffer::getLength(void)
+  {
+  	return length;
+  }
+  
+  void OLCB_CAN_Buffer::setLength(uint8_t len)
+  {
+  	length = len;
+  }
+  
+  void OLCB_CAN_Buffer::setData(uint8_t *bytes, uint8_t len)
+  {
+	length = (len>8)?8:len;
+  	memcpy(data, bytes, length);
+  }
+  
+  void OLCB_CAN_Buffer::setDataByte(uint8_t byte, uint8_t position)
+  {
+  	data[(position>=length)?(length-1):position];
+  }
 
-//  void OLCB_CAN_Buffer::init(uint16_t alias) {
-//    // set default header: extended frame w low priority
-//    flags.extended = 1;
-//    // all bits in header default to 1 except MASK_SRC_ALIAS
-//    id = 0x1FFFF000 | (alias & MASK_SRC_ALIAS);
-//  }
 
-  void OLCB_CAN_Buffer::init(OLCB_NodeID *sourceID) {
-    // set default header: extended frame w low priority
-    flags.extended = 1;
-    // all bits in header default to 1 except MASK_SRC_ALIAS
-    id = 0x1FFFF000 | (sourceID->alias & MASK_SRC_ALIAS);
+  void OLCB_CAN_Buffer::init(OLCB_NodeID *sourceID)
+  {
+    init(sourceID->alias);
+  }
+  
+  void OLCB_CAN_Buffer::init(uint16_t alias)
+  {
+	internal = 0;
+  	flags.extended = 1;
+  	id = 0x1FFFF000 | (alias & MASK_SRC_ALIAS);
   }
 
   // start of basic message structure
@@ -75,10 +99,7 @@
   // start of CAN-level messages
  
   void OLCB_CAN_Buffer::setCID(int i, uint16_t testval, uint16_t alias) {
-    flags.extended = 1;
-    // all bits in header default to 1 except MASK_SRC_ALIAS
-  	setSourceAlias(alias);
-//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+  	init(alias);
     setFrameTypeCAN();
     uint16_t var =  (( (0x8-i) & 7) << 12) | (testval & 0xFFF); 
     setVariableField(var);
@@ -90,13 +111,10 @@
   }
 
   void OLCB_CAN_Buffer::setRID(uint16_t alias) {
-    flags.extended = 1;
-    // all bits in header default to 1 except MASK_SRC_ALIAS
-  	setSourceAlias(alias);
-//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+  	init(alias);
     setFrameTypeCAN();
     setVariableField(RID_VAR_FIELD);
-    length=0;
+    length=6;
   }
 
   bool OLCB_CAN_Buffer::isRID() {
@@ -105,9 +123,7 @@
   
   void OLCB_CAN_Buffer::setAMR(OLCB_NodeID *nid)
   {
-  	flags.extended = 1;
-  	setSourceAlias(nid->alias);
-//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+  	init(nid->alias);
   	setFrameTypeCAN();
   	setVariableField(AMR_VAR_FIELD);
   	length=6;
@@ -122,9 +138,7 @@
 //TODO The source alias isn't getting set right here!
   void OLCB_CAN_Buffer::setAMD(OLCB_NodeID *nid)
   {
-  	flags.extended = 1;
-  	setSourceAlias(nid->alias);
-//  	id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+  	init(nid->alias);
   	setFrameTypeCAN();
   	setVariableField(AMD_VAR_FIELD);
   	length=6;
@@ -134,6 +148,18 @@
   bool OLCB_CAN_Buffer::isAMD()
   {
   	return isFrameTypeCAN() && getVariableField() == AMD_VAR_FIELD;
+  }
+  
+  void OLCB_CAN_Buffer::setAME(OLCB_NodeID *nid)
+  {
+  	setFrameTypeCAN();
+  	setDestinationNID(nid); //sets the destination
+  	setVariableField(AME_VAR_FIELD);
+  }
+  
+  bool OLCB_CAN_Buffer::isAME()
+  {
+  	return isFrameTypeCAN() && getVariableField() == AME_VAR_FIELD;
   }
 
   // end of CAN-level messages
@@ -165,7 +191,8 @@
         setOpenLcbFormat(fmt);  // order matters here
   }
   
-  bool OLCB_CAN_Buffer::isOpenLcbMTI(uint16_t fmt, uint16_t mtiHeaderByte) {
+  bool OLCB_CAN_Buffer::isOpenLcbMTI(uint16_t fmt, uint16_t mtiHeaderByte)
+  {
       return isFrameTypeOpenLcb() 
                 && ( getOpenLcbFormat() == fmt )
                 && ( (getVariableField()&~MASK_OPENLCB_FORMAT) == mtiHeaderByte );
@@ -203,9 +230,7 @@
   }
 
   void OLCB_CAN_Buffer::setInitializationComplete(OLCB_NodeID* nid) {
-    flags.extended = 1;
-    // all bits in header default to 1 except MASK_SRC_ALIAS
-    id = 0x1FFFF000 | (nid->alias & MASK_SRC_ALIAS);
+    init(nid->alias);
     setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_INITIALIZATION_COMPLETE);
     length=6;
     memcpy(data, nid->val, 6);
@@ -237,12 +262,13 @@
   //TODO if it's an addressed verifyID, need to offset by 1!
   void OLCB_CAN_Buffer::getNodeID(OLCB_NodeID* nid)
   {
-  	//FIX THIS!!! Need to make sure that there is really enough data to pull!
   	uint8_t start = 0;
-  	if(isVerifyNIDglobal() || isIdentifyEventsGlobal())
+  	if(isVerifyNIDAddressed() || isIdentifyEventsAddressed())
   		start = 1;
-//  	if(length >= 6+start)
-	memcpy(nid->val, data+start, 6);
+  	if(length >= (6+start))
+  	{
+		memcpy(nid->val, data+start, 6);
+	}
 	// else just rely on the nid having been initialized to some value, which it will have been; by default 0.0.0.0.0.0
   }
   
@@ -275,19 +301,20 @@
   void OLCB_CAN_Buffer::setVerifyNID(OLCB_NodeID* nid)
   {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID);
+    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID_GLOBAL);
     length = 6;
     memcpy(data, nid->val, 6);
   }
 
-  bool OLCB_CAN_Buffer::isVerifyNID() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID);
+  bool OLCB_CAN_Buffer::isVerifyNIDGlobal() {
+      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID_GLOBAL);
   }
 
-  bool OLCB_CAN_Buffer::isVerifyNIDglobal() {
+  bool OLCB_CAN_Buffer::isVerifyNIDAddressed()
+  {
       if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
       if (length == 0) return false;
-      if (data[0] != MTI_VERIFY_NID_GLOBAL) return false;
+      if (data[0] != MTI_VERIFY_NID_ADDRESSED) return false;
       return true;
   }  
   
@@ -298,7 +325,7 @@
 
   void OLCB_CAN_Buffer::setVerifiedNID(OLCB_NodeID* nid) {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_VERIFIED_NID);
+    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFIED_NID);
     length=6;
     memcpy(data, nid->val, 6);
     //data[0] = nid->val[0];
@@ -351,10 +378,10 @@
       return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_EVENTS);
   }
   
-  bool OLCB_CAN_Buffer::isIdentifyEventsGlobal() {
+  bool OLCB_CAN_Buffer::isIdentifyEventsAddressed() {
       if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
       if (length == 0) return false;
-      if (data[0] != MTI_IDENTIFY_EVENTS_GLOBAL) return false;
+      if (data[0] != MTI_IDENTIFY_EVENTS_ADDRESSED) return false;
       return true;
   }  
 
@@ -386,17 +413,28 @@
   {
     if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
       return false;
-    return (data[0] == ((MTI_DATAGRAM_RCV_OK>>4)&0xFF) );
+    return (data[0] == ((MTI_DATAGRAM_RCV_OK)&0xFF) );
   }
   
   bool OLCB_CAN_Buffer::isDatagramNak()
   {
     if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
       return false;
-    return (data[0] == ((MTI_DATAGRAM_REJECTED>>4)&0xFF) );
+    return (data[0] == ((MTI_DATAGRAM_REJECTED)&0xFF) );
   }
   
   uint16_t OLCB_CAN_Buffer::getDatagramNakErrorCode()
   {
-    return (data[1]<<8) | (data[2]);
+  	if(length >= 3)
+	    return (data[1]<<8) | (data[2]);
+	else
+		return 0;
   }
+  
+  
+bool OLCB_CAN_Buffer::isProtocolSupportInquiry() {
+  if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
+  if (length == 0) return false;
+  if ( ((data[0]<<8)|data[1]) != MTI_PROTOCOL_SUPPORT_INQUIRY) return false;
+  return true;
+}  

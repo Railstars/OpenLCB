@@ -28,14 +28,14 @@ bool OLCB_CAN_Link::sendCID(OLCB_NodeID *nodeID, uint8_t i) {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   uint16_t fragment;
   switch (i) {
-    case 0:  fragment = ( (nodeID->val[0]<<4)&0xFF0) | ( (nodeID->val[1] >> 4) &0xF);
+    case 1:  fragment = ( (nodeID->val[0]<<4)&0xFF0) | ( (nodeID->val[1] >> 4) &0xF);
              break;
-    case 1:  fragment = ( (nodeID->val[1]<<8)&0xF00) | ( nodeID->val[2] &0xF);
+    case 2:  fragment = ( (nodeID->val[1]<<8)&0xF00) | ( nodeID->val[2] &0xF);
              break;
-    case 2:  fragment = ( (nodeID->val[3]<<4)&0xFF0) | ( (nodeID->val[4] >> 4) &0xF);
+    case 3:  fragment = ( (nodeID->val[3]<<4)&0xFF0) | ( (nodeID->val[4] >> 4) &0xF);
              break;
     default:
-    case 3:  fragment = ( (nodeID->val[4]<<8)&0xF00) | ( nodeID->val[5] &0xF);
+    case 4:  fragment = ( (nodeID->val[4]<<8)&0xF00) | ( nodeID->val[5] &0xF);
              break;
   }
   txBuffer.setCID(i,fragment,nodeID->alias);
@@ -63,9 +63,9 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
 
 bool OLCB_CAN_Link::handleTransportLevel()
 {
-	OLCB_NodeID n;
+	OLCB_NodeID n(0,0,0,0,0,0);
     // see if this is a Verify request to us; first check type
-    if (rxBuffer.isVerifyNID() || rxBuffer.isVerifyNIDglobal())
+    if (rxBuffer.isVerifyNIDGlobal() || rxBuffer.isVerifyNIDAddressed())
     {
       // check address
       rxBuffer.getNodeID(&n);
@@ -88,7 +88,13 @@ bool OLCB_CAN_Link::handleTransportLevel()
       }
       return true;
     }
-    
+    else if(rxBuffer.isAME())
+    {
+      rxBuffer.getNodeID(&n);
+      Serial.println("Got an AME for:");
+      n.print();
+      _aliasHelper.sendAMD(&n);
+    }
     else if(rxBuffer.isAMR()) //is someone releasing their alias? Remove it from the cache.
     {
       _translationCache.removeByAlias(rxBuffer.getSourceAlias());
@@ -102,7 +108,9 @@ void OLCB_CAN_Link::update(void)
   // coming from the CAN bus
   if(can_get_message(&rxBuffer))
   {
-  	internalMessage = false;
+//  	Serial.println("Got message on wire");
+//  	Serial.println(rxBuffer.id, HEX);
+	rxBuffer.setExternal();
 	deliverMessage();
   }
   //update alias allocation
@@ -117,22 +125,24 @@ void OLCB_CAN_Link::deliverMessage(void)
 	//send it to our aliasHelper to ensure against duplicate aliases.
 //    if(rxBuffer.isFrameTypeOpenLcb())
 //    {
-		_aliasHelper.checkMessage(&rxBuffer);
+//Serial.println("Checking with aliashelper");
+	_aliasHelper.checkMessage(&rxBuffer);
 //	}
 //	else
 //	{
 //	}
 
     // See if this message is a CAN-level message that we should be handling.
+    //Serial.println("Checking transport level");
     if(handleTransportLevel())
     {
+    	//Serial.println("Done!");
 		//bail early, the packet grabbed isn't for any of the attached handlers to deal with
 	     return;
 	}
     //otherwise, let's pass it on to our handlers
     
     //First, if there is a source for this message, see if we can pull the full NID from the cache!
-    //TODO NONE OF THIS BELOW WILL WORK BECAUSE OLCB_CAN_Buffer NEVER STORES FULL NIDS! Which is silly!
     OLCB_NodeID n;
     rxBuffer.getSourceNID(&n); //get the alias
     if(_translationCache.getNIDByAlias(&n)) //attempt to fill it in with a NID from the cache
@@ -147,13 +157,13 @@ void OLCB_CAN_Link::deliverMessage(void)
     OLCB_Virtual_Node *iter = _handlers;
     while(iter)
     {
-      if(iter->handleMessage(&rxBuffer))
+      if(iter->handleMessage((OLCB_Buffer*)(&rxBuffer)))
       {
         break;
       }
       iter = iter->next;
     }
-
+    //TODO add default handler here; needs to do things like protocol identification
 }
 
 uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t start)
@@ -228,8 +238,10 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
   txBuffer.setDestinationNID(dest);
   txBuffer.setFrameTypeOpenLcb();
   txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
-  txBuffer.data[0] = MTI_DATAGRAM_RCV_OK>>4;
+  txBuffer.data[0] = MTI_DATAGRAM_RCV_OK;
   txBuffer.length = 1;
+  Serial.println("Sending ACK");
+  Serial.println(txBuffer.data[0], HEX);
   while(!sendMessage());
   return true;
 }
@@ -242,7 +254,7 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
   txBuffer.setDestinationNID(dest);
   txBuffer.setFrameTypeOpenLcb();
   txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
-  txBuffer.data[0] = MTI_DATAGRAM_REJECTED>>4;
+  txBuffer.data[0] = MTI_DATAGRAM_REJECTED;
   txBuffer.data[1] = (reason>>8)&0xFF;
   txBuffer.data[2] = reason&0xFF;
   txBuffer.length = 3;
@@ -252,6 +264,7 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
 
 bool OLCB_CAN_Link::sendVerifiedNID(OLCB_NodeID *nid)
 {
+//	Serial.println("Attempting to send VerifiedNID!");
   if(!can_check_free_buffer())
     return false;
   txBuffer.init(nid);
@@ -298,6 +311,7 @@ bool OLCB_CAN_Link::sendPCER(OLCB_Event *event)
 
 bool OLCB_CAN_Link::sendConsumerIdentified(OLCB_Event *event)
 {
+	//Serial.println("sending Consumer Identified");
     if(!can_check_free_buffer())
     {
         return false;
@@ -318,6 +332,7 @@ bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
 
 bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
 {    
+	//Serial.println("sending Producer Identified");
     if(!can_check_free_buffer())
     {
         return false;
@@ -353,8 +368,8 @@ bool OLCB_CAN_Link::sendMessage()
     while(!can_send_message(&txBuffer));
     
     //now, send it to us!
-    internalMessage = true;
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
+	rxBuffer.setInternal();
     deliverMessage(); //send the message to local nodes
     
     return true;

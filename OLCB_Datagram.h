@@ -20,11 +20,6 @@
 #define DATAGRAM_REJECTED_RESEND_MASK            0x200
 #define DATAGRAM_REJECTED_TRANSPORT_ERROR_MASK   0x400
 
-#define MTI_DATAGRAM_RCV_OK             0x4CF
-#define MTI_DATAGRAM_REJECTED           0x4DF
-
-
-
 /*************************
  A few things to worry about.
  Sending a datagram:

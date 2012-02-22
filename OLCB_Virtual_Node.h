@@ -32,6 +32,7 @@ class OLCB_Virtual_Node : public OLCB_Handler
 //  void setLink(OLCB_Link *newLink);
 
 
+//TODO THIS IS NOT USED ANY MORE!
   virtual bool verifyNID(OLCB_NodeID *nid)
   {
       if( isPermitted() && ((*nid) == (*NID)) )

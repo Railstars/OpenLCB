@@ -15,27 +15,20 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
     // see if any replies are waiting to send
     while (_sendEvent < _numEvents)
     {
-    	//Serial.print("    i = ");
-        //Serial.print(_sendEvent, DEC);
-        //Serial.print(" ");
-        //Serial.print(_events[_sendEvent].flags, HEX);
-        //Serial.print(":  ");
         // OK to send, see if marked for some cause
         // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
         if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG))
         {
-        	//Serial.println("identify producer");
+        	//Serial.println("identify produced events!");
             if(_link->sendProducerIdentified(&_events[_sendEvent]))
             {
-            	//Serial.println(_events[_sendEvent].flags, HEX);
             	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
-            	//Serial.println(_events[_sendEvent].flags, HEX);
             }
             break; // only send one from this loop
         }
         else if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG))
         {
-        	//Serial.println("identify consumer");
+        	//Serial.println("identify consumed events!");
             if(_link->sendConsumerIdentified(&_events[_sendEvent]))
             {
             	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
@@ -118,6 +111,7 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
     //first, check to see if it is an event
     if(buffer->isPCEventReport()) //it's what is colloquially known as an event! Or technically as a Producer-Consumer Event Report (!?)
     {
+    	//Serial.println("PCE");
         //great, get the EID, and call consume
         OLCB_Event event;
         buffer->getEventID(&event);
@@ -145,21 +139,25 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
         retval = handleIdentifyConsumers(&event);
     }
 
-    else if(buffer->isIdentifyEvents() || buffer->isIdentifyEventsGlobal())
+    else if(buffer->isIdentifyEvents() || buffer->isIdentifyEventsAddressed())
     {
     	//Serial.println("IdentifyEvents");
         // See if addressed to us
         OLCB_NodeID n;
-		if(buffer->isIdentifyEvents()) //addressed variant
+		if(buffer->isIdentifyEventsAddressed()) //addressed variant
 		{
+			//Serial.println("addressed...");
 			buffer->getNodeID(&n);
+			n.print();
 			if(n.empty() || NID->sameNID(&n))//addressed to us
 			{
+				//Serial.println("to us!");
 				retval = handleIdentifyEvents();
 			}
 		}
 		else
 		{
+			//Serial.println("global!");
 	        retval = handleIdentifyEvents();
 	    }
     }
@@ -178,6 +176,9 @@ bool OLCB_Event_Handler::handleIdentifyEvents(void)
 {
 	for (int i = 0; i < _numEvents; ++i)
 	{
+		//Serial.print("flagging event ");
+		//Serial.println(i, DEC);
+		//Serial.println(_events[i].flags, HEX);
 		_events[i].flags |= IDENT_FLAG;
 	}
 	_sendEvent = 0;

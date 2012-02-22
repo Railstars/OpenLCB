@@ -5,6 +5,7 @@ bool OLCB_Datagram_Handler::sendDatagram(OLCB_Datagram *datagram)
     //someone wants to send a datagram! Check to see if our buffer is free, or two seconds have passed
     if(!_txDatagramBufferFree)
     {
+    	Serial.println("No free datagram tx buffer!");
         return false;
     }
     _txDatagramBufferFree = false;
@@ -25,16 +26,20 @@ bool OLCB_Datagram_Handler::isDatagramSent(void)
 
 bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 {
+	Serial.println("datagram handle message");
     //First, make sure we are dealing with a datagram.
     if(!frame->isDatagram())
     {
+    	Serial.println("not a datagram");
         //see if it is an addressed non-datagram to us, and if it is an expected ACK or NAK
         if(frame->isDatagramAck())
         {
+            Serial.println("It's an ACK...is it for us!?");
             OLCB_NodeID n;
             frame->getDestinationNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK
             {
+            	Serial.println("Got an ACK, resetting datagram tx buffer");
                 datagramResult(true,0);
                 _txDatagramBufferFree = true;
                 return true;
@@ -42,19 +47,22 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         }
         else if(frame->isDatagramNak())
         {
+        	Serial.println("It's a NAK!");
             OLCB_NodeID n;
             frame->getDestinationNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK, but NAK'd
             {
                 uint16_t errorCode = frame->getDatagramNakErrorCode();
-                switch(errorCode)
+                if(errorCode & DATAGRAM_REJECTED_RESEND_MASK)
                 {
-                    case DATAGRAM_REJECTED_BUFFER_FULL:
+                    	Serial.println("resending datagram");
                         //send again!
                         _txFlag = true;
                         _loc = 0;
-                        break;
-                    default:  //give up.
+                }
+                else
+                {
+                		Serial.println("give up");
                         _txFlag = false;
                         _loc = 0;
                         _txDatagramBufferFree = true;
@@ -63,6 +71,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
                 return true;
             }
         }
+        Serial.println("Wasn't anything we care about, apparently");
         return false; //whatever it was, it wasn't for us!
     }
 
@@ -86,6 +95,8 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 
     // check the source for this datagram against our receive buffer
     frame->getSourceNID(&n);
+    uint8_t *frame_data = frame->getData();;
+    uint8_t frame_length = frame->getLength();
     if(_rxDatagramBufferFree || n == _rxDatagramBuffer->source)
     {
         //begin filling!
@@ -113,22 +124,23 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 
         }
 
-        for (int i=0; i< frame->length; i++) {
-            _rxDatagramBuffer->data[i+_rxDatagramBuffer->length] = frame->data[i];
+		//copy data from frame into _rxDatagramBuffer->data
+        for (uint8_t i=0; i< frame_length; i++) {
+            _rxDatagramBuffer->data[i+_rxDatagramBuffer->length] = *(frame_data+i);
         }
-        _rxDatagramBuffer->length += frame->length;
+        _rxDatagramBuffer->length += frame_length;
 
         if(frame->isLastDatagram()) //Last frame? Need to ACK or NAK!
         {
             if(processDatagram())
             {
-                //Something isn't quite right here, not getting the right source NID? The alias is right...
-                //        _rxDatagramBuffer->source->print();
-                //        n.print(); //TODO this one and the one above are DIFFERENT but should not be!!
+            	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
+                Serial.println("ACKING!");
                 while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
             }
             else
             {
+            	Serial.println("NAKING!");
                 while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
