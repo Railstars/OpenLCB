@@ -131,9 +131,12 @@ class OLCB_CAN_Link : public OLCB_Link
   bool sendLearnEvent(OLCB_Event *event);
   bool sendProducerIdentified(OLCB_Event *event);
 
+  bool sendMessage(OLCB_Buffer *msg); //send an arbitrary message
+  
 
   void addVNode(OLCB_Virtual_Node *vnode);
   void removeVNode(OLCB_Virtual_Node *vnode);
+  
   
   //friend class OLCB_CAN_Alias_Helper;
  //protected:

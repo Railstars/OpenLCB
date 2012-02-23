@@ -106,7 +106,12 @@ void OLCB_CAN_Link::update(void)
 {
   //check first for any self-generated messages, and second for messages
   // coming from the CAN bus
-  if(can_get_message(&rxBuffer))
+  if(rxBuffer.isInternal()) //we have a message waiting to be delivered
+  {
+  	deliverMessage();
+	rxBuffer.setExternal(); //so we don't read it again
+  }
+  else if(can_get_message(&rxBuffer))
   {
 //  	Serial.println("Got message on wire");
 //  	Serial.println(rxBuffer.id, HEX);
@@ -344,6 +349,19 @@ bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
     return true;
 }
 
+bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
+{
+	if(!can_check_free_buffer())
+    {
+        return false;
+    }
+    memcpy(&txBuffer, (OLCB_CAN_Buffer*)msg, sizeof(OLCB_CAN_Buffer));
+    while(!sendMessage())
+    {
+    }
+    return true;
+}
+
 
 
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
@@ -370,7 +388,7 @@ bool OLCB_CAN_Link::sendMessage()
     //now, send it to us!
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
 	rxBuffer.setInternal();
-    deliverMessage(); //send the message to local nodes
+    //deliverMessage(); //send the message to local nodes
     
     return true;
 }

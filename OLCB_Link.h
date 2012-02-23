@@ -9,6 +9,7 @@
 #include "OLCB_Datagram.h"
 #include "OLCB_Stream.h"
 #include "OLCB_NodeID.h"
+#include "OLCB_Buffer.h"
 
 class OLCB_Virtual_Node;
 
@@ -24,6 +25,8 @@ class OLCB_Link
   virtual void update(void); //called repeatedly  
   virtual void addVNode(OLCB_Virtual_Node *vnode);
   virtual void removeVNode(OLCB_Virtual_Node *vnode);
+  
+  virtual bool sendMessage(OLCB_Buffer *msg);
   
   virtual bool sendVerifiedNID(OLCB_NodeID *nid)  {return false;}
   virtual bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request)  {return false;}

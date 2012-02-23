@@ -62,8 +62,8 @@ class OLCB_NodeID {
     {
 //      Serial.println("==: comparing aliases");
 //      Serial.println(alias,DEC);
-//       Serial.println(other.alias, DEC);
-//       Serial.println(alias==other.alias, DEC);
+//      Serial.println(other.alias, DEC);
+//      Serial.println(alias==other.alias, DEC);
       return (alias==other.alias); //same alias, same NID. Effectively.
     }
     //if one or both aliases are zero, compare the NID itself. Aliases can't always be trusted :D

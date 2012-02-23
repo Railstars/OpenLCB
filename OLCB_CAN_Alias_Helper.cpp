@@ -227,7 +227,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 				}
 				else
 				{
-					//Serial.println("Done! setting initialized to true");
+					Serial.println("Done! setting initialized to true");
 					_nodes[index].node->initialized = true;
 				}
 				break;
