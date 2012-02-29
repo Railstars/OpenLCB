@@ -64,7 +64,8 @@ class OLCB_Event {
       if(index >= len) return -1;
       for (int i = index; i<len; i++)
       {
-          if (*this == *(array+i)) return i;
+          if (*this == *(array+i))
+          	return i;
       }
       return -1;
   }

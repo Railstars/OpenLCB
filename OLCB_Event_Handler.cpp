@@ -65,6 +65,10 @@ void OLCB_Event_Handler::loadEvents(OLCB_Event* events, uint16_t numEvents)
 {
     _events = events;
     _numEvents = numEvents;
+    _halfEvents = _numEvents>>1;
+    Serial.println("loadevents");
+    Serial.println(_numEvents, DEC);
+    Serial.println(_halfEvents, DEC);
     //Serial.println("loadEvents");
     for(uint16_t i = 0; i < _numEvents; ++i)
     {
@@ -77,8 +81,8 @@ void OLCB_Event_Handler::loadEvents(OLCB_Event* events, uint16_t numEvents)
 
 bool OLCB_Event_Handler::produce(uint16_t index) //OLCB_Event *event) //call to produce an event with ID = EID
 {
-	//Serial.print("produce() ");
-	//Serial.println(index);
+	Serial.print("produce() ");
+	Serial.println(index);
 	bool retval = false;
 //	int8_t index = 0;
 //	while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
@@ -89,6 +93,7 @@ bool OLCB_Event_Handler::produce(uint16_t index) //OLCB_Event *event) //call to 
         	retval = true;
             _events[index].flags |= PRODUCE_FLAG;
             _sendEvent = min(_sendEvent, index);
+            _events[index].print();
         }
 //        ++index;
 //        if (index>=_numEvents) break;
@@ -125,7 +130,6 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
         // see if we produce the listed event
         OLCB_Event event;
         buffer->getEventID(&event);
-        event.print();
         retval = handleIdentifyProducers(&event);
     }
 
@@ -135,7 +139,6 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
         // see if we consume the listed event
         OLCB_Event event;
         buffer->getEventID(&event);
-        event.print();
         retval = handleIdentifyConsumers(&event);
     }
 
@@ -148,7 +151,6 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 		{
 			//Serial.println("addressed...");
 			buffer->getNodeID(&n);
-			n.print();
 			if(n.empty() || NID->sameNID(&n))//addressed to us
 			{
 				//Serial.println("to us!");
@@ -189,19 +191,13 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
 {
     bool retval = false;
     int16_t index = 0;
-    //Serial.println("Received PCER");
-      	for(uint8_t j = 0; j < 7; ++j)
-	{
-		//Serial.print(event->val[j]);
-		//Serial.print(" : ");
-	}
-	//Serial.println(event->val[7]);
-	//Serial.println("Checking to see if we can consume");
+    Serial.println("Received PCER");
+	Serial.println("Can consume?");
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
         if (_events[index].flags & OLCB_Event::CAN_CONSUME_FLAG)
         {
-        	//Serial.println("Yes, calling consume()");
+        	//Serial.println("Yes");
             // yes, notify our own code
             if(consume(index))
             {
@@ -214,8 +210,8 @@ bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)
             break;
         }
     }
-    if(false)
-    	//Serial.println("No");
+//    if(!retval)
+//	    //Serial.println("No");
     return retval;
 }
 

@@ -52,6 +52,7 @@ public:
 protected:
     OLCB_Event *_events; //an array of events
     uint16_t _numEvents; //the size of the above array
+    uint16_t _halfEvents;
     uint16_t _sendEvent; //used as an index into _numEvents
     bool handleIdentifyEvents(void);
     bool handleLearnEvent(OLCB_Event *event);
