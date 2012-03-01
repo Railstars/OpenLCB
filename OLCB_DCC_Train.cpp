@@ -1,4 +1,4 @@
-#ifdef DO_OLCB_DCC_TRAIN
+// #ifdef DO_OLCB_DCC_TRAIN
 
 #include "OLCB_DCC_Train.h"
 #include "float16.h"
@@ -23,9 +23,12 @@ void OLCB_DCC_Train::DCC_Train_initialize() //OLCB_Datagram *txBuf, OLCB_Datagra
 	{
 		DCC_Train_controllers[i] = NULL;
 	}
-	for(i = 0; i < 28; ++i)
+	for(i = 0; i < 127; ++i)
 	{
-		DCC_Train_speed_curve[i] = map(i, 0, 27, 0, 255);
+		DCC_Train_speed_curve[i] = map(i, 1, 127, 0, 255);
+		Serial.print(i);
+		Serial.print(": ");
+		Serial.println(DCC_Train_speed_curve[i]);
 	}
 }
 
@@ -61,12 +64,16 @@ bool OLCB_DCC_Train::DCC_Train_processDatagram(OLCB_Datagram *datagram)
 		switch(datagram->data[1])
 		{
 		case DATAGRAM_MOTIVE_ATTACH:
+			Serial.println("attach");
 			return handleAttachDatagram(datagram);
 		case DATAGRAM_MOTIVE_RELEASE:
+			Serial.println("release");
 			return handleReleaseDatagram(datagram);
 		case DATAGRAM_MOTIVE_SETSPEED:
+			Serial.println("setspeed");
 			return handleSetSpeedDatagram(datagram);
 		case DATAGRAM_MOTIVE_GETSPEED:
+			Serial.println("getspeed");
 			return handleGetSpeedDatagram(datagram);
 		case DATAGRAM_MOTIVE_SETFX:
 			return handleSetFXDatagram(datagram);
@@ -74,6 +81,7 @@ bool OLCB_DCC_Train::DCC_Train_processDatagram(OLCB_Datagram *datagram)
 			return handleGetFXDatagram(datagram);
 		}
 	}
+	else Serial.println("not a motive datagram");
 	return false;
 }
 
@@ -86,7 +94,7 @@ uint8_t OLCB_DCC_Train::DCC_Train_metersPerSecondToDCCSpeed(float mps)
 	
 	//I hate the float division, but it is necessary :( :( :(
 	
-	return mps * 0xFF / DCC_Train_full_voltage_speed;
+	return mps * DCC_Train_full_voltage_speed; //(0xFF / DCC_Train_full_voltage_speed);
 }
 
 uint8_t OLCB_DCC_Train::DCC_Train_DCCSpeedToNotch(uint8_t dccspeed)
@@ -108,7 +116,7 @@ uint8_t OLCB_DCC_Train::DCC_Train_DCCSpeedToNotch(uint8_t dccspeed)
 	*/
 	
 	uint8_t notch = 1; //default: stop
-	for(uint8_t i = DCC_Train_speed_steps; i >= 0; --i)
+	for(uint8_t i = 126; i >= 0; --i)
 	{
 		if(DCC_Train_speed_curve[i] <= dccspeed)
 		{
@@ -116,7 +124,6 @@ uint8_t OLCB_DCC_Train::DCC_Train_DCCSpeedToNotch(uint8_t dccspeed)
 			break;
 		}
 	}
-	
 	return notch;
 }
 
@@ -129,8 +136,8 @@ bool OLCB_DCC_Train::handleSetSpeedDatagram(OLCB_Datagram *datagram)
 		//notice that it is not enough to get the raw integral value of the float16, but we must scale it, because the DCC speed steps != absolute speed, but throttle notches. So we have to account for what motor speed each notch represents, and choose the appropriate notch..yuck!
 		//finally, unhandled here, users can set a custom scale value. TODO
 		_float16_shape_type f_val;
-		f_val.words.msw = datagram->data[1];
-		f_val.words.lsw = datagram->data[2];
+		f_val.words.msw = datagram->data[2];
+		f_val.words.lsw = datagram->data[3];
 		float new_speed;
 		new_speed = float16_to_float32(f_val);
 		int8_t dir = 1; //forward
@@ -139,8 +146,13 @@ bool OLCB_DCC_Train::handleSetSpeedDatagram(OLCB_Datagram *datagram)
 			dir = -1; //reverse
 			new_speed *= -1; //make it positive
 		}
-		uint8_t speed = dir * DCC_Train_DCCSpeedToNotch(DCC_Train_metersPerSecondToDCCSpeed(new_speed));
-		
+		Serial.println("Speed change");
+		Serial.println(new_speed);
+		Serial.println(dir);
+		Serial.println(DCC_Train_metersPerSecondToDCCSpeed(new_speed));
+		int8_t speed = dir * DCC_Train_DCCSpeedToNotch(DCC_Train_metersPerSecondToDCCSpeed(new_speed));
+		Serial.println(speed, DEC);
+		Serial.println("====");
 		if(DCC_Controller->setSpeed(DCC_Train_dcc_address, speed, DCC_Train_speed_steps))
 		{
 			DCC_Train_speed = speed;
@@ -152,8 +164,7 @@ bool OLCB_DCC_Train::handleSetSpeedDatagram(OLCB_Datagram *datagram)
 			return true;
 		}
 	}
-	
 	return false;
 }
 
-#endif
+// #endif

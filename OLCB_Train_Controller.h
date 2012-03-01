@@ -36,7 +36,14 @@ class OLCB_Train_Controller
 //   	void Train_Controller_datagramResult(bool accepted, uint16_t errorcode);
 
 	void Train_Controller_attach(OLCB_NodeID *nid) {Train_Controller_train = nid;}
-  	void Train_Controller_setSpeed_m_s(float new_speed) {Train_Controller_speed = new_speed; Train_Controller_needs_update = true;}   	
+  	void Train_Controller_setSpeed_m_s(float new_speed)
+  	{
+  		if(Train_Controller_speed != new_speed)
+  		{
+  			Train_Controller_speed = new_speed;
+  			Train_Controller_needs_update = true;
+  		}
+  	}
   private:
 	  bool handleAttachedDatagram(OLCB_Datagram *datagram) {return true;}
 	  bool handleReleaseedDatagram(OLCB_Datagram *datagram) {return true;}
@@ -47,7 +54,7 @@ class OLCB_Train_Controller
   //state infor
   	OLCB_Datagram_Handler *Train_Controller_DatagramHandler;
   	bool Train_Controller_needs_update;
-  	float Train_Controller_speed; //in speedsteps; signed for direction
+  	float Train_Controller_speed; //in m/s; signed for direction
     uint32_t Train_Controller_FX; //bitfield of 32 FX
     OLCB_NodeID *Train_Controller_train;
 };

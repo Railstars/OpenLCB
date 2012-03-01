@@ -395,13 +395,13 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_NodeID* nodeID)
 	//A couple of possibilities here. Either nodeID is empty, in which case we should send a verified nid for all our nids, or it's not, in which case we should only send one
 	if(nodeID->empty())
 	{
-		nodeID->print();
+		//nodeID->print();
 		//Serial.println("empty nodeid, sending all");
 		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 		{
 			if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
 			{
-				_nodes[i].node->print();
+				//_nodes[i].node->print();
 				_link->sendVerifiedNID(_nodes[i].node);
 			}
 		}
@@ -409,13 +409,13 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_NodeID* nodeID)
 	else //not empty TODO
 	{
 		//Serial.println("non-empty nodeid, searching");
-		nodeID->print();
+		//nodeID->print();
 		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 		{
 			if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized && nodeID->sameNID(_nodes[i].node))
 			{
 				//Serial.println("found match");
-				_nodes[i].node->print();
+				//_nodes[i].node->print();
 				_link->sendVerifiedNID(_nodes[i].node);
 				break;
 			}
@@ -430,7 +430,7 @@ void OLCB_CAN_Alias_Helper::sendAMD(OLCB_NodeID* nodeID)
 		if(_nodes[i].alias && nodeID->sameNID(_nodes[i].node))
 		{
 			//Serial.println("found match");
-			_nodes[i].node->print();
+			//_nodes[i].node->print();
 			_link->sendAMD(_nodes[i].node);
 			break;
 		}

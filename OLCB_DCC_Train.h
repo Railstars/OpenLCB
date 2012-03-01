@@ -1,4 +1,4 @@
-#ifdef DO_OLCB_DCC_TRAIN
+// #ifdef DO_OLCB_DCC_TRAIN
 
 #ifndef __OLCB_DCC_TRAIN_H__
 #define __OLCB_DCC_TRAIN_H__
@@ -25,7 +25,7 @@
 
 #define SPEED_STEPS_14	14
 #define SPEED_STEPS_28	28
-#define SPEED_STEPS_128	127
+#define SPEED_STEPS_128	128
 
 
 #define NUM_SIMULTANEOUS_CONTROLLERS 2
@@ -73,7 +73,7 @@ class OLCB_DCC_Train
     uint8_t DCC_Train_speed_steps;
     uint8_t DCC_Train_dcc_address;
     uint8_t DCC_Train_speed_curve[128];
-    float DCC_Train_full_voltage_speed; //yuck! good thing we don't need it very much.
+    static const float DCC_Train_full_voltage_speed = 5.0; //0xFF divded by speed in m/s at full voltage
 
   //state infor
   	int8_t DCC_Train_speed; //in speedsteps; signed for direction
@@ -83,4 +83,4 @@ class OLCB_DCC_Train
 
 
 #endif
-#endif //DO_OLCB_DCC_TRAIN
+// #endif //DO_OLCB_DCC_TRAIN
