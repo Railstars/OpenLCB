@@ -63,6 +63,7 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
 
 bool OLCB_CAN_Link::handleTransportLevel()
 {
+	//Serial.println("handleTransportLevel");
 	OLCB_NodeID n(0,0,0,0,0,0);
     // see if this is a Verify request to us; first check type
     if (rxBuffer.isVerifyNIDGlobal() || rxBuffer.isVerifyNIDAddressed())
@@ -74,13 +75,16 @@ bool OLCB_CAN_Link::handleTransportLevel()
       return true;
     }
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
-    else if (rxBuffer.isVerifiedNID()) {
+    else if (rxBuffer.isVerifiedNID())
+    {
+    	//Serial.println("!!!! Got VerifiedNID!");
       // We have a packet that contains a verified NID. We might have requested this. Let's check.
       rxBuffer.getSourceNID(&n); //get the alias from the message header
       rxBuffer.getNodeID(&n); //Get the actual NID from the message body
       if(n.alias == 0) return false;
-      if(n == _nodeIDToBeVerified)
+      if(n.sameNID(&_nodeIDToBeVerified))
       {
+      	//Serial.println("And it's the one we were waiting for!");
         //add it to the NID/NIDa translation cache
         _translationCache.add(&n);
         //remove from temp buffer
@@ -91,7 +95,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
     else if(rxBuffer.isAME())
     {
       rxBuffer.getNodeID(&n);
-      Serial.println("Got an AME for:");
+      //Serial.println("Got an AME for:");
       n.print();
       _aliasHelper.sendAMD(&n);
     }
@@ -113,8 +117,8 @@ void OLCB_CAN_Link::update(void)
   }
   else if(can_get_message(&rxBuffer))
   {
-//  	Serial.println("Got message on wire");
-//  	Serial.println(rxBuffer.id, HEX);
+//  	//Serial.println("Got message on wire");
+//  	//Serial.println(rxBuffer.id, HEX);
 	rxBuffer.setExternal();
 	deliverMessage();
   }
@@ -176,18 +180,22 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   //datagram is the datagram to transmit.
   //start is the index of the next byte to start from.
   //returns the number of bytes sent.
+  Serial.println("sendDGfragment");
+  //datagram->destination.print();
   if(!datagram->destination.alias)
   {
     //try the cache
     uint16_t alias = _translationCache.getAliasByNID(&(datagram->destination));
+    Serial.println(alias, HEX);
     if(!alias) //not cached!
     {
       //need to ask
+      Serial.println("Link: Gonna have to ask with a VerifyNID");
       sendVerifyNID(&(datagram->source), &(datagram->destination)); //if it can't go through, it'll get called again. no need to loop.
       return 0;
     }
   }
-  
+  datagram->destination.print();
   //now, figure out how many bytes remain, and whether this is the last fragment that needs to be sent.
   // Notice that the CAN link can send 8 bytes per frame.
   //set the source, and init the buffer.
@@ -245,8 +253,8 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
   txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
   txBuffer.data[0] = MTI_DATAGRAM_RCV_OK;
   txBuffer.length = 1;
-  Serial.println("Sending ACK");
-  Serial.println(txBuffer.data[0], HEX);
+  //Serial.println("Sending ACK");
+  //Serial.println(txBuffer.data[0], HEX);
   while(!sendMessage());
   return true;
 }
@@ -269,7 +277,7 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
 
 bool OLCB_CAN_Link::sendVerifiedNID(OLCB_NodeID *nid)
 {
-//	Serial.println("Attempting to send VerifiedNID!");
+//	//Serial.println("Attempting to send VerifiedNID!");
   if(!can_check_free_buffer())
     return false;
   txBuffer.init(nid);

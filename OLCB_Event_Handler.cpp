@@ -294,8 +294,6 @@ void OLCB_Event_Handler::newEvent(int index, bool p, bool c)
       	//Serial.print(index, DEC);
     	//Serial.print(" ");
     	//Serial.println(_events[index].flags, HEX);
-
-
 }
 
 void OLCB_Event_Handler::markToLearn(int index, bool mark)

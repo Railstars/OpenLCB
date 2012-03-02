@@ -320,7 +320,7 @@
   
   bool OLCB_CAN_Buffer::isVerifiedNID()
   {
-    return isOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI, MTI_VERIFIED_NID);
+    return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFIED_NID);
   }
 
   void OLCB_CAN_Buffer::setVerifiedNID(OLCB_NodeID* nid) {

@@ -79,6 +79,9 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     //Note: Sometimes we want to process a datagram regardless of the address. This is the case for what I call "default handlers". If we are marked as such, skip this check.
     OLCB_NodeID n;
     frame->getDestinationNID(&n);
+    //Serial.println("got datagram for");
+    //n.print();
+    //NID->print();
 
     if((NID == 0) || (n != *NID))
     {
@@ -119,7 +122,8 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             //      _rxDatagramBuffer->source->print();
             _rxDatagramBuffer->length = 0;
             frame->getSourceNID(&(_rxDatagramBuffer->source));
-            //        _rxDatagramBuffer->source.print();
+            //_rxDatagramBuffer->source.print();
+            //_rxDatagramBuffer->destination.print();
             //        n.print(); //TODO this one and the one above are DIFFERENT but should not be!!
 
         }

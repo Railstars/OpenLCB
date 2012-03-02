@@ -15,7 +15,7 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 	//while allocating aliases, we must restart the process if we receive an incoming message with an alias that matches the one being allocated
 	//notice that we have to guard against attempting to allocate two identical aliases on two different virtual nodes
 	//notice too that we must ignore any CID that we have sent for the nodeID that generated it. Effectively, we can simply ignore any CIDs, and let those aliases that successfully generate a RID to impede the allocation of an identical alias earlier in the process.
-	
+
 	//first, check to see if the source alias matches anything in our queues.
 	uint16_t alias = msg->getSourceAlias();
 	//Serial.print("Checking against alias ");
@@ -88,7 +88,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 	{
 		_nodes[index].state = ALIAS_EMPTY_STATE;
 	}
-		
+
 	//check queue for NIDS ready to send NID.
 	switch(_nodes[index].state)
 	{
@@ -298,8 +298,8 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 		while(1);
 	}
 
-	
-		
+
+
 	slot->node = nodeID;
 	//does the slot already have an alias we can reuse?
 	if(slot->alias)
@@ -346,7 +346,7 @@ void OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
 	{
 		nodeID->node->alias = nodeID->alias;
 	}
-	
+
 	nodeID->state = ALIAS_RELEASING_STATE; //emit AMR?, then go straight into negotiations; will settle into either READY_STATE or HOLDING_STATE depending on whether there's an actual NodeID attached
 }
 
@@ -378,12 +378,12 @@ void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
 			break;
 		}
 	}
-	
+
 	if(!slot) //couldn't find it, nothing to release
 	{
 		return;
 	}
-	
+
 	//remove it's NID
 	slot->node = 0;
 	//move it into the allocated, but waiting state
@@ -395,13 +395,13 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_NodeID* nodeID)
 	//A couple of possibilities here. Either nodeID is empty, in which case we should send a verified nid for all our nids, or it's not, in which case we should only send one
 	if(nodeID->empty())
 	{
-		nodeID->print();
+		//nodeID->print();
 		//Serial.println("empty nodeid, sending all");
 		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 		{
 			if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
 			{
-				_nodes[i].node->print();
+				//_nodes[i].node->print();
 				_link->sendVerifiedNID(_nodes[i].node);
 			}
 		}
@@ -409,13 +409,13 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_NodeID* nodeID)
 	else //not empty TODO
 	{
 		//Serial.println("non-empty nodeid, searching");
-		nodeID->print();
+		//nodeID->print();
 		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 		{
 			if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized && nodeID->sameNID(_nodes[i].node))
 			{
 				//Serial.println("found match");
-				_nodes[i].node->print();
+				//_nodes[i].node->print();
 				_link->sendVerifiedNID(_nodes[i].node);
 				break;
 			}
@@ -430,7 +430,7 @@ void OLCB_CAN_Alias_Helper::sendAMD(OLCB_NodeID* nodeID)
 		if(_nodes[i].alias && nodeID->sameNID(_nodes[i].node))
 		{
 			//Serial.println("found match");
-			_nodes[i].node->print();
+			//_nodes[i].node->print();
 			_link->sendAMD(_nodes[i].node);
 			break;
 		}
