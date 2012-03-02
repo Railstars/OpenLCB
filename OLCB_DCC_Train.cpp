@@ -136,17 +136,23 @@ bool OLCB_DCC_Train::handleSetSpeedDatagram(OLCB_Datagram *datagram)
 		//notice that it is not enough to get the raw integral value of the float16, but we must scale it, because the DCC speed steps != absolute speed, but throttle notches. So we have to account for what motor speed each notch represents, and choose the appropriate notch..yuck!
 		//finally, unhandled here, users can set a custom scale value. TODO
 		_float16_shape_type f_val;
+		Serial.println("Speed change");
+		Serial.println("raw data");
 		f_val.words.msw = datagram->data[2];
 		f_val.words.lsw = datagram->data[3];
+		Serial.print(datagram->data[2], HEX);
+		Serial.print(" ");
+		Serial.println(datagram->data[3], HEX);
 		float new_speed;
 		new_speed = float16_to_float32(f_val);
+		Serial.println(new_speed);
+		Serial.println("----");
 		int8_t dir = 1; //forward
 		if(new_speed < 0)
 		{
 			dir = -1; //reverse
 			new_speed *= -1; //make it positive
 		}
-		Serial.println("Speed change");
 		Serial.println(new_speed);
 		Serial.println(dir);
 		Serial.println(DCC_Train_metersPerSecondToDCCSpeed(new_speed));

@@ -79,8 +79,8 @@ float float16_to_float32(_float16_shape_type f16_val)
 {
 	//printf("32to16. Input: 0x%x\n", f16_val.bits);
 	
-	int16_t sign = (f16_val.bits >> 15) & 0x00000001;
-	uint16_t exponent = (f16_val.bits >> 10) & 0x0000001f;
+	int32_t sign = (f16_val.bits >> 15) & 0x00000001;
+	uint32_t exponent = (f16_val.bits >> 10) & 0x0000001f;
     uint32_t mantissa =  f16_val.bits & 0x000003ff;
 	
 	//printf("float16:\n  f16_val.number.sign: %d\n  f16_val.number.exponent %d\n  f16_val.number.mantissa %d\n", sign, exponent, mantissa);
