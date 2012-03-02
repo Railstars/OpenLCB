@@ -96,7 +96,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
     {
       rxBuffer.getNodeID(&n);
       //Serial.println("Got an AME for:");
-      n.print();
+      //n.print();
       _aliasHelper.sendAMD(&n);
     }
     else if(rxBuffer.isAMR()) //is someone releasing their alias? Remove it from the cache.
@@ -180,22 +180,22 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   //datagram is the datagram to transmit.
   //start is the index of the next byte to start from.
   //returns the number of bytes sent.
-  Serial.println("sendDGfragment");
+  //Serial.println("sendDGfragment");
   //datagram->destination.print();
   if(!datagram->destination.alias)
   {
     //try the cache
     uint16_t alias = _translationCache.getAliasByNID(&(datagram->destination));
-    Serial.println(alias, HEX);
+    //Serial.println(alias, HEX);
     if(!alias) //not cached!
     {
       //need to ask
-      Serial.println("Link: Gonna have to ask with a VerifyNID");
+      //Serial.println("Link: Gonna have to ask with a VerifyNID");
       sendVerifyNID(&(datagram->source), &(datagram->destination)); //if it can't go through, it'll get called again. no need to loop.
       return 0;
     }
   }
-  datagram->destination.print();
+  //datagram->destination.print();
   //now, figure out how many bytes remain, and whether this is the last fragment that needs to be sent.
   // Notice that the CAN link can send 8 bytes per frame.
   //set the source, and init the buffer.

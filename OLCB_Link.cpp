@@ -19,27 +19,27 @@ void OLCB_Link::addVNode(OLCB_Virtual_Node *vnode)
 
 void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
 {
-//  Serial.println("Removing Handler ");
+//  //Serial.println("Removing Handler ");
   if(!_handlers) //nothing to remove!
     return;
     
 
-//  Serial.println((uint16_t)handler, HEX);
+//  //Serial.println((uint16_t)handler, HEX);
   
-//  Serial.println("====");
+//  //Serial.println("====");
   OLCB_Virtual_Node *iter = _handlers;
 //  while(iter != NULL)
 //  {
-//    Serial.println((uint16_t)iter, HEX);
+//    //Serial.println((uint16_t)iter, HEX);
 //    iter = iter->next;
 //  }
-//  Serial.println("====");
+//  //Serial.println("====");
   
   //Looking for the handler that comes before handler.
 //  iter = _handlers;
   if(iter == vnode)
   {
-//    Serial.println("The first item is the one to remove!");
+//    //Serial.println("The first item is the one to remove!");
     _handlers = vnode->next;
   }
   else
@@ -48,8 +48,8 @@ void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
    {
      if(iter->next == vnode)
      {
-//       Serial.print("Found the one before: ");
-//        Serial.println((uint16_t)iter, HEX);
+//       //Serial.print("Found the one before: ");
+//        //Serial.println((uint16_t)iter, HEX);
         //remove it from the list
        iter->next = vnode->next;
         break;
@@ -58,12 +58,12 @@ void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
     }
   }
   
-//  Serial.println("==*==");
+//  //Serial.println("==*==");
 //  iter = _handlers;
 //  while(iter != NULL)
 //  {
-//    Serial.println((uint16_t)iter, HEX);
+//    //Serial.println((uint16_t)iter, HEX);
 //    iter = iter->next;
 //  }
-//  Serial.println("==*==");
+//  //Serial.println("==*==");
 }

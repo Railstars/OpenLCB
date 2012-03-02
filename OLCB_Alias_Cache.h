@@ -44,15 +44,15 @@ class OLCB_Alias_Cache
   
   void add(OLCB_NodeID *nid)
   {
-    Serial.println("In AliasCache->add()");
+    //Serial.println("In AliasCache->add()");
     //find the least used entry, while making sure the alias isn't already cached.
     if(!nid->alias) //No alias? Nothing to cache!
     {
-      Serial.println("No alias, no cache!");
+      //Serial.println("No alias, no cache!");
       return;
     }
-    else
-    Serial.print("Cacheing alias "); Serial.println(nid->alias,DEC);
+    //else
+    //Serial.print("Cacheing alias "); //Serial.println(nid->alias,DEC);
     
     uint8_t leasthits = 255;
     uint8_t index = 0;
@@ -61,7 +61,7 @@ class OLCB_Alias_Cache
       if(_nids[i] == *nid)
       {
         //already cached; return.
-        Serial.println("What do you know? Already in the cache!");
+        //Serial.println("What do you know? Already in the cache!");
         return;
       }
       if(_hits[i] < leasthits)
@@ -70,10 +70,10 @@ class OLCB_Alias_Cache
         index = i;
       }
     }
-    Serial.print("Cacheing it in index "); Serial.println(index, DEC);
+    //Serial.print("Cacheing it in index "); //Serial.println(index, DEC);
     memcpy(&(_nids[index]), nid, sizeof(OLCB_NodeID));
     _hits[index] = 1;
-    Serial.println("Leaving add()");
+    //Serial.println("Leaving add()");
   }
   
   bool getAliasByNID(OLCB_NodeID *nid)

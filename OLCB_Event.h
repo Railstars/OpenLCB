@@ -77,25 +77,25 @@ class OLCB_Event {
   
   void print(void)
   {
-#if defined(__AVR__) & defined(OLCB_DEBUG)
-    char id[] = "eid:   ";
-    Serial.print(id);
-    Serial.println(val[0],DEC);
-    Serial.print(id);
-    Serial.println(val[1],DEC);
-    Serial.print(id);
-    Serial.println(val[2],DEC);
-    Serial.print(id);
-    Serial.println(val[3],DEC);
-    Serial.print(id);
-    Serial.println(val[4],DEC);
-    Serial.print(id);
-    Serial.println(val[5],DEC);
-    Serial.print(id);
-    Serial.println(val[6],DEC);
-    Serial.print(id);
-    Serial.println(val[7],DEC);
-#endif
+// #if defined(__AVR__) & defined(OLCB_DEBUG)
+//     char id[] = "eid:   ";
+//     Serial.print(id);
+//     Serial.println(val[0],DEC);
+//     Serial.print(id);
+//     Serial.println(val[1],DEC);
+//     Serial.print(id);
+//     Serial.println(val[2],DEC);
+//     Serial.print(id);
+//     Serial.println(val[3],DEC);
+//     Serial.print(id);
+//     Serial.println(val[4],DEC);
+//     Serial.print(id);
+//     Serial.println(val[5],DEC);
+//     Serial.print(id);
+//     Serial.println(val[6],DEC);
+//     Serial.print(id);
+//     Serial.println(val[7],DEC);
+// #endif
   }
 
   // bit mask local flags
