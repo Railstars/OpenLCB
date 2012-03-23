@@ -59,6 +59,14 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
   return true;
 }
 
+bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest)
+{
+  if (!can_check_free_buffer()) return false;  // couldn't send just now
+  txBuffer.setRejectOptionalInteraction(source, dest);
+  while(!sendMessage());  // wait for queue, but earlier check says will succeed
+  return true;
+}
+
 /////// Methods for sending and receiving OLCB packets over CAN
 
 bool OLCB_CAN_Link::handleTransportLevel()
@@ -129,23 +137,12 @@ void OLCB_CAN_Link::update(void)
 
 void OLCB_CAN_Link::deliverMessage(void)
 {
-	//ASSUMPTION! We are assuming that rxBuffer contains something interesting! It might not, in which case the behavior of this method is undefined!!
-	
-	//send it to our aliasHelper to ensure against duplicate aliases.
-//    if(rxBuffer.isFrameTypeOpenLcb())
-//    {
-//Serial.println("Checking with aliashelper");
+	//first, send it to our aliasHelper to ensure against duplicate aliases.
 	_aliasHelper.checkMessage(&rxBuffer);
-//	}
-//	else
-//	{
-//	}
 
     // See if this message is a CAN-level message that we should be handling.
-    //Serial.println("Checking transport level");
     if(handleTransportLevel())
     {
-    	//Serial.println("Done!");
 		//bail early, the packet grabbed isn't for any of the attached handlers to deal with
 	     return;
 	}
@@ -163,16 +160,36 @@ void OLCB_CAN_Link::deliverMessage(void)
       if(_translationCache.getNIDByAlias(&n))
         rxBuffer.setDestinationNID(&n);
     }
+    else
+    {
+    	//no destination specified
+	    n.set(0,0,0,0,0,0);
+	}
+    
+    //now, pass the message among the handlers;
+    bool handled = false;
+    OLCB_NodeID *dest_node = NULL;
+    
     OLCB_Virtual_Node *iter = _handlers;
     while(iter)
     {
+      //check to see if message is addressed to this node
+      if(n.alias && (n.alias == iter->NID->alias))
+      {
+      	dest_node = iter->NID;
+      }
       if(iter->handleMessage((OLCB_Buffer*)(&rxBuffer)))
       {
-        break;
+        handled = true;
       }
       iter = iter->next;
     }
-    //TODO add default handler here; needs to do things like protocol identification
+    if(rxBuffer.isExternal() && dest_node && !handled) //if it came from the outside, and was addressed to one of ours, and it went unhandled, then:
+    {
+    	//Serial.println("Message was external, addressed to us, and not handled");
+    	rxBuffer.getSourceNID(&n);
+    	sendRejectOptionalInteraction(dest_node, &n);
+    }
 }
 
 uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t start)
@@ -261,6 +278,7 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
 
 bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reason = DATAGRAM_REJECTED)
 {
+	//Serial.println("Sending Datagram NAK");
   if(!can_check_free_buffer())
     return false;
   txBuffer.init(source);
@@ -270,6 +288,8 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
   txBuffer.data[0] = MTI_DATAGRAM_REJECTED;
   txBuffer.data[1] = (reason>>8)&0xFF;
   txBuffer.data[2] = reason&0xFF;
+  //Serial.println(txBuffer.data[1], HEX);
+  //Serial.println(txBuffer.data[2], HEX);
   txBuffer.length = 3;
   while(!sendMessage());
   return true;
@@ -364,6 +384,15 @@ bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
         return false;
     }
     memcpy(&txBuffer, (OLCB_CAN_Buffer*)msg, sizeof(OLCB_CAN_Buffer));
+	//Serial.println("Message going out:");
+	//Serial.println(txBuffer.id, HEX);
+	//Serial.println(txBuffer.flags.rtr, BIN);
+	for(uint8_t i = 0; i < txBuffer.length; ++i)
+	{
+		//Serial.println(txBuffer.data[i], HEX);
+	}
+	//Serial.println("=====");
+
     while(!sendMessage())
     {
     }

@@ -149,11 +149,15 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }
+        return true;
     }
     else //we can't currently accept this frame, because the buffer is not free
     {
-        while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_BUFFER_FULL));
+    	//Serial.println("NAKing datagram, buffer full");
+        while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
+        return true;
     }
+    return false; //should never reach here!
 }
 
 

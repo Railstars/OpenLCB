@@ -15,6 +15,10 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
     // see if any replies are waiting to send
     while (_sendEvent < _numEvents)
     {
+    	//Serial.print("_sendEvent: ");
+    	//Serial.println(_sendEvent);
+    	//Serial.print("_numEvents: ");
+    	//Serial.println(_numEvents);
         // OK to send, see if marked for some cause
         // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
         if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG))

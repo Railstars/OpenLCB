@@ -49,9 +49,10 @@
  * basic 8-bit Message Type byte values (from data[0])
  * for addressed messages.
  */
+#define MTI_OPTION_INT_REJECTED			0x0C
 
-#define MTI_VERIFY_NID_ADDRESSED           0x0A
-#define MTI_IDENTIFY_EVENTS_ADDRESSED      0x2B
+#define MTI_VERIFY_NID_ADDRESSED        0x0A
+#define MTI_IDENTIFY_EVENTS_ADDRESSED   0x2B
 
 #define MTI_DATAGRAM_RCV_OK             0x4C
 #define MTI_DATAGRAM_REJECTED           0x4D
@@ -175,6 +176,10 @@
   // start of OpenLCB messages
 
   // basic messages  
+  bool isRejectOptionalInteraction(void);
+  void setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest);
+
+  
   bool isInitializationComplete(void);
   void setInitializationComplete(OLCB_NodeID* nid);
 

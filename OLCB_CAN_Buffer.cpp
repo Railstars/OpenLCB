@@ -37,6 +37,7 @@
   {
 	internal = 0;
   	flags.extended = 1;
+  	flags.rtr = 0;
   	id = 0x1FFFF000 | (alias & MASK_SRC_ALIAS);
   }
 
@@ -206,6 +207,21 @@
   // end of OpenLCB format and decode support
   
   // start of OpenLCB messages
+  
+  bool OLCB_CAN_Buffer::isRejectOptionalInteraction(void)
+  {
+    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
+      return false;
+    return (data[0] == ((MTI_OPTION_INT_REJECTED)&0xFF) );
+  }
+  
+  void OLCB_CAN_Buffer::setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest)
+  {
+    init(dest->alias);
+    setOpenLcbMTI(MTI_FORMAT_ADDRESSED_NON_DATAGRAM,source->alias);
+    length=1;
+    data[0] = MTI_OPTION_INT_REJECTED;
+  }
     
   void OLCB_CAN_Buffer::setPCEventReport(OLCB_Event* eid) {
 //    init(nodeAlias);
