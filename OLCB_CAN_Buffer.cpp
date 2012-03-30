@@ -442,7 +442,11 @@
   uint16_t OLCB_CAN_Buffer::getDatagramNakErrorCode()
   {
   	if(length >= 3)
+  	{
+  		//Serial.print("NAK error code: ");
+  		//Serial.println((data[1]<<8) | (data[2]), HEX);
 	    return (data[1]<<8) | (data[2]);
+	}
 	else
 		return 0;
   }

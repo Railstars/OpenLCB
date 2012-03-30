@@ -276,7 +276,7 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
   return true;
 }
 
-bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reason = DATAGRAM_REJECTED)
+bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reason = DATAGRAM_REJECTED_PERMANENT_ERROR)
 {
 	//Serial.println("Sending Datagram NAK");
   if(!can_check_free_buffer())
@@ -383,16 +383,15 @@ bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
     {
         return false;
     }
-    Serial.println("memcpy sendmessage");
     memcpy(&txBuffer, (OLCB_CAN_Buffer*)msg, sizeof(OLCB_CAN_Buffer));
-	Serial.println("Message going out:");
-	Serial.println(txBuffer.id, HEX);
-	Serial.println(txBuffer.flags.rtr, BIN);
-	for(uint8_t i = 0; i < txBuffer.length; ++i)
-	{
-		Serial.println(txBuffer.data[i], HEX);
-	}
-	Serial.println("=====");
+	//Serial.println("Message going out:");
+	//Serial.println(txBuffer.id, HEX);
+	//Serial.println(txBuffer.flags.rtr, BIN);
+	//for(uint8_t i = 0; i < txBuffer.length; ++i)
+	//{
+		//Serial.println(txBuffer.data[i], HEX);
+	//}
+	//Serial.println("=====");
 
     while(!sendMessage())
     {

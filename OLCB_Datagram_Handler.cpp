@@ -145,7 +145,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             else
             {
             	//Serial.println("NAKING!");
-                while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED));
+                while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_DATAGRAM_TYPE_NOT_ACCEPTED));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }

@@ -135,9 +135,9 @@ bool sameNID(const OLCB_NodeID *other) const
   {
 // #if defined(__AVR__) & defined(OLCB_DEBUG)
 //#if defined(OLCB_DEBUG)
-/*    char id[] = "nid:   ";
+    char id[] = "nid:   ";
     Serial.print("alias: ");
-    Serial.println(alias,DEC);
+    Serial.println(alias,HEX);
      Serial.print(id);
      Serial.println(val[0],DEC);
      Serial.print(id);
@@ -151,7 +151,6 @@ bool sameNID(const OLCB_NodeID *other) const
      Serial.print(id);
      Serial.println(val[5],DEC);
 //#endif
-*/
   }
 
 };
