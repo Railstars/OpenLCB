@@ -125,8 +125,8 @@ void OLCB_CAN_Link::update(void)
   }
   else if(can_get_message(&rxBuffer))
   {
-//  	//Serial.println("Got message on wire");
-//  	//Serial.println(rxBuffer.id, HEX);
+  	//Serial.println("Got message on wire");
+  	//Serial.println(rxBuffer.id, HEX);
 	rxBuffer.setExternal();
 	deliverMessage();
   }
@@ -383,15 +383,16 @@ bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
     {
         return false;
     }
+    Serial.println("memcpy sendmessage");
     memcpy(&txBuffer, (OLCB_CAN_Buffer*)msg, sizeof(OLCB_CAN_Buffer));
-	//Serial.println("Message going out:");
-	//Serial.println(txBuffer.id, HEX);
-	//Serial.println(txBuffer.flags.rtr, BIN);
+	Serial.println("Message going out:");
+	Serial.println(txBuffer.id, HEX);
+	Serial.println(txBuffer.flags.rtr, BIN);
 	for(uint8_t i = 0; i < txBuffer.length; ++i)
 	{
-		//Serial.println(txBuffer.data[i], HEX);
+		Serial.println(txBuffer.data[i], HEX);
 	}
-	//Serial.println("=====");
+	Serial.println("=====");
 
     while(!sendMessage())
     {

@@ -30,6 +30,7 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 			  //INHIBITED STATES
 				case  ALIAS_EMPTY_STATE:
 					_nodes[i].alias = 0; //very simple, just make sure we don't accidentally use the same alias again.
+					//Serial.println("Conflict while in ALIAS_EMPTY_STATE");
 					//Serial.println("Found a match with node:");
 					//_nodes[i].node->print();
 					break;
@@ -37,6 +38,7 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 					//ignore internal AMR messages too!
 					if(msg->isInternal() && msg->isAMR())
 						break;
+					//Serial.println("Conflict while in ALIAS_CID1_STATE");
 					//else, fall through to next test
 				case  ALIAS_CID2_STATE:
 				case  ALIAS_CID3_STATE:
@@ -53,6 +55,7 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 					//ignore all CIDs (6.5.2 bullet 3); also ignore any internal RID messages, because it's our own.
 					if((msg->isExternal() && !msg->isCID()) || (msg->isInternal() && !msg->isCID() && !msg->isRID()) )
 					{
+						//Serial.println("Conflict while in ALIAS_AMD_STATE");
 						reAllocateAlias(&(_nodes[i]));
 					}
 					break;
@@ -83,13 +86,11 @@ void OLCB_CAN_Alias_Helper::checkMessage(OLCB_CAN_Buffer *msg)
 
 void OLCB_CAN_Alias_Helper::update(void)
 {
-	//TODO is this really encessary?
-	if(_nodes[index].node->alias == 0)
-	{
-		_nodes[index].state = ALIAS_EMPTY_STATE;
-	}
-
 	//check queue for NIDS ready to send NID.
+	//Serial.print("Alias helper working on index: ");
+	//Serial.println(index, DEC);
+	//Serial.print("   state = ");
+	//Serial.println(_nodes[index].state, DEC);
 	switch(_nodes[index].state)
 	{
 			case ALIAS_EMPTY_STATE:
@@ -97,31 +98,45 @@ void OLCB_CAN_Alias_Helper::update(void)
 			case ALIAS_READY_STATE:
 				break;	//do nothing! move on to the next node
 			case ALIAS_RELEASING_STATE: //emit AMR, return to initial state
+				//Serial.println("ALIAS_RELEASING_STATE");
 				if(_nodes[index].node) //if there is a real NodeID attached
 				{
-					//Serial.println("Moving to CID1 state");
 					_nodes[index].state = ALIAS_CID1_STATE;
+					//Serial.println("Moving to ALIAS_CID1_STATE");
 					//Serial.println(_nodes[index].state, HEX);
 				}
 				else //no actual NodeID, so just go to the holding state.
 				{
 					_nodes[index].state = ALIAS_HOLDING_STATE;
-					//Serial.println("Moving to holding state");
+					//Serial.println("Moving to ALIAS_HOLDING_STATE");
 				}
 				if(!_link->sendAMR(_nodes[index].node))
 				{
 					_nodes[index].state = ALIAS_RELEASING_STATE;
+					//Serial.println("Reverting to ALIAS_RELEASING_STATE");
 				}
 				break;
 			case ALIAS_CID1_STATE:
+				//Serial.println("ALIAS_CID1_STATE");
+				//check to see if we have a new alias
+				//Serial.println("Checking for alias");
+				//Serial.println(_nodes[index].node->alias, HEX);
+				//Serial.println(_nodes[index].alias, HEX);
+				if(_nodes[index].node->alias != _nodes[index].alias)
+				{
+					_nodes[index].node->alias = _nodes[index].alias;
+					//Serial.println("copying new alias");
+				}
 				//send CID1!
 				//Serial.println("sending CID1");
 				//_nodes[index].node->print();
 				_nodes[index].state = ALIAS_CID2_STATE;
+				//Serial.println("Moving to ALIAS_CID2_STATE");
 				if(!_link->sendCID(_nodes[index].node, 1))
 				{
 					//Serial.println("no go!");
-					_nodes[index].state = ALIAS_CID1_STATE; 
+					_nodes[index].state = ALIAS_CID1_STATE;
+					//Serial.println("Reverting to ALIAS_CID1_STATE");
 				}
 				break;
 			case ALIAS_CID2_STATE:
@@ -238,7 +253,8 @@ void OLCB_CAN_Alias_Helper::update(void)
 
 void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 {
-	//the idea here is to take every alias in the "Empty" state (i.e., that is unallocated), and to go ahead and allocate the sucker, moving it directly into the Initial state, rather than the AMD state.
+	/*** CURRENTLY BROKEN!!!! ***/
+/*	//the idea here is to take every alias in the "Empty" state (i.e., that is unallocated), and to go ahead and allocate the sucker, moving it directly into the Initial state, rather than the AMD state.
 	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
 		if(_nodes[i].state == ALIAS_EMPTY_STATE)
@@ -250,6 +266,7 @@ void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 			_nodes[i].state = ALIAS_CID1_STATE;
 		}
 	}
+	*/
 }
 
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
@@ -267,6 +284,7 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 			return;
 		}
 	}
+	//Serial.println("setting initialized to false");
 	nodeID->initialized = false;
 	//find a location for this nodeID in our list
 	for(i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
@@ -299,7 +317,7 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	}
 
 
-
+	//Serial.println("Assigning nodeid to cache slot");
 	slot->node = nodeID;
 	//does the slot already have an alias we can reuse?
 	if(slot->alias)
@@ -315,10 +333,14 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 		uint32_t lfsr1 = (((uint32_t)nodeID->val[0]) << 16) | (((uint32_t)nodeID->val[1]) << 8) | ((uint32_t)nodeID->val[2]);
 		uint32_t lfsr2 = (((uint32_t)nodeID->val[3]) << 16) | (((uint32_t)nodeID->val[4]) << 8) | ((uint32_t)nodeID->val[5]);
 		slot->alias = (lfsr1 ^ lfsr2 ^ (lfsr1>>12) ^ (lfsr2>>12) )&0xFFF;
-		slot->node->alias = slot->alias;
+		//slot->node->alias = slot->alias;
+		if(slot->alias == 0)
+			slot->alias = 1; //a hack just to avoid a 0 alias.
 		slot->state = ALIAS_CID1_STATE;
 	}
-	//slot->node->print();
+	//Serial.print("New alias = ");
+	//Serial.println(slot->alias);
+	//Serial.println("Allocate alias done!");
 }
 
 void OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
@@ -328,25 +350,32 @@ void OLCB_CAN_Alias_Helper::reAllocateAlias(private_nodeID_t* nodeID)
 		//Serial.println("Returning to inhibited state");
 		nodeID->node->initialized = false;
 	}
-
-	uint32_t temp1 = ((nodeID->lfsr1<<9) | ((nodeID->lfsr2>>15)&0x1FF)) & 0xFFFFFF;
-	uint32_t temp2 = (nodeID->lfsr2<<9) & 0xFFFFFF;
-   
-	// add
-	nodeID->lfsr2 = nodeID->lfsr2 + temp2 + 0x7A4BA9l;
-	nodeID->lfsr1 = nodeID->lfsr1 + temp1 + 0x1B0CA3l;
-   
-	// carry
-	nodeID->lfsr1 = (nodeID->lfsr1 & 0xFFFFFF) | ((nodeID->lfsr2&0xFF000000) >> 24);
-	nodeID->lfsr2 = nodeID->lfsr2 & 0xFFFFFF;
-
-	nodeID->alias = (nodeID->lfsr1 ^ nodeID->lfsr2 ^ (nodeID->lfsr1>>12) ^ (nodeID->lfsr2>>12) )&0xFFF;
-
-	if(nodeID->node)
+	uint16_t old_alias = nodeID->alias;
+	do
 	{
-		nodeID->node->alias = nodeID->alias;
-	}
+		uint32_t temp1 = ((nodeID->lfsr1<<9) | ((nodeID->lfsr2>>15)&0x1FF)) & 0xFFFFFF;
+		uint32_t temp2 = (nodeID->lfsr2<<9) & 0xFFFFFF;
+   
+		// add
+		nodeID->lfsr2 = nodeID->lfsr2 + temp2 + 0x7A4BA9l;
+		nodeID->lfsr1 = nodeID->lfsr1 + temp1 + 0x1B0CA3l;
+   
+		// carry
+		nodeID->lfsr1 = (nodeID->lfsr1 & 0xFFFFFF) | ((nodeID->lfsr2&0xFF000000) >> 24);
+		nodeID->lfsr2 = nodeID->lfsr2 & 0xFFFFFF;
 
+		//Serial.print("Making new alias to be: ");
+		//Serial.println((nodeID->lfsr1 ^ nodeID->lfsr2 ^ (nodeID->lfsr1>>12) ^ (nodeID->lfsr2>>12) )&0xFFF, HEX);
+		nodeID->alias = (nodeID->lfsr1 ^ nodeID->lfsr2 ^ (nodeID->lfsr1>>12) ^ (nodeID->lfsr2>>12) )&0xFFF;
+	}
+	while((nodeID->alias == 0) || (nodeID->alias == old_alias)); //working to avoid a '0' alias, which can happen, or the repeated generation of the same alias.
+	//if(nodeID->node)
+	//{
+	//	nodeID->node->alias = nodeID->alias;
+	//	//Serial.println("Assigned alias to node");
+	//}
+
+	//Serial.println("Moving to releasing state to emit AMR");
 	nodeID->state = ALIAS_RELEASING_STATE; //emit AMR?, then go straight into negotiations; will settle into either READY_STATE or HOLDING_STATE depending on whether there's an actual NodeID attached
 }
 
