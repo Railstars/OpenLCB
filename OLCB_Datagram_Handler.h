@@ -13,7 +13,7 @@
 
 // A mix-in class for handling the datagram protocol.
 
-class OLCB_Datagram_Handler : public OLCB_Handler
+class OLCB_Datagram_Handler : public OLCB_Virtual_Node
 {
  public:
   OLCB_Datagram_Handler() : _rxDatagramBufferFree(true), _txDatagramBufferFree(true), _sentTime(0), _txFlag(false), _loc(0)
@@ -38,6 +38,9 @@ class OLCB_Datagram_Handler : public OLCB_Handler
   bool sendDatagram(OLCB_Datagram *datagram);
   bool isDatagramSent(void);
   
+  //clears any pending communications between this node and nodeid
+  void clearBuffer(OLCB_NodeID *nodeid);
+
  protected:
  
  //TODO condense all these bools into a bitfield
@@ -48,6 +51,7 @@ class OLCB_Datagram_Handler : public OLCB_Handler
   bool _txFlag;
   uint8_t _loc;
   
+  //TODO MAKE THESE NOT POINTERS
   OLCB_Datagram *_rxDatagramBuffer;
   OLCB_Datagram *_txDatagramBuffer;
 };

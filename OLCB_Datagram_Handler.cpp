@@ -139,12 +139,12 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             if(processDatagram())
             {
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
-                //Serial.println("ACKING!");
+                Serial.println("ACKING!");
                 while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
             }
             else
             {
-            	//Serial.println("NAKING!");
+            	Serial.println("NAKING!");
                 while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_DATAGRAM_TYPE_NOT_ACCEPTED));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
@@ -193,4 +193,14 @@ void OLCB_Datagram_Handler::update(void)
         _txFlag = false;
         datagramResult(false,DATAGRAM_ERROR_ACK_TIMEOUT);
     }
+}
+
+void OLCB_Datagram_Handler::clearBuffer(OLCB_NodeID *nodeid)
+{
+	Serial.println("Datagram Handler");
+	if((!_rxDatagramBufferFree) && (*nodeid == _rxDatagramBuffer->source))
+	{
+		Serial.println("  clearing buffer");
+		_rxDatagramBufferFree = true; //kill transmission
+	}
 }

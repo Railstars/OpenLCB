@@ -11,6 +11,16 @@ bool OLCB_CAN_Link::initialize(void)
     {
         return false;
     }
+ 
+#if defined (__AVR_AT90CAN128__) || defined (__AVR_AT90CAN64__) || defined (__AVR_AT90CAN32__)
+	for(uint8_t i = 0; i < 15; ++i)
+    {
+    	CANPAGE = (i << 4);
+    	CANIDM4 |= (1<<IDEMSK); //ignore standard frames
+	}
+#else
+	//TODO figure out how to set up filters for MCP2515
+#endif
     
     _aliasHelper.initialize(this);
     _translationCache.initialize(10);
@@ -103,13 +113,52 @@ bool OLCB_CAN_Link::handleTransportLevel()
     else if(rxBuffer.isAME())
     {
       rxBuffer.getNodeID(&n);
-      //Serial.println("Got an AME for:");
-      //n.print();
+      Serial.println("Got an AME for:");
+      n.print();
       _aliasHelper.sendAMD(&n);
+      return true;
     }
     else if(rxBuffer.isAMR()) //is someone releasing their alias? Remove it from the cache.
     {
+      Serial.println("Link: Got AMR");
+      rxBuffer.getSourceNID(&n);
+      //n.print();
       _translationCache.removeByAlias(rxBuffer.getSourceAlias());
+      //and, kill any pending transmissions between that node and any of ours:
+      OLCB_Virtual_Node *iter = _handlers;
+      while(iter)
+      {
+        Serial.println("calling clearBuffer");
+      	iter->clearBuffer(&n);
+        iter = iter->next;
+      }
+      return true;
+    }
+    else if(rxBuffer.isAMD()) //is someone claiming a new alias? Update the cache
+    {
+      Serial.println("Link: Got AMD");
+      rxBuffer.getNodeID(&n);
+      if(!n.empty())
+      {
+	      n.alias = rxBuffer.getSourceAlias();
+      	  //n.print();
+      	  _translationCache.add(&n);
+      	  //TODO clear buffers? probably not needed, node should transmit "buffer full retransmit" error, so OK.
+      }
+      else //AMD should not be empty; assume that the alias is now lost in limbo until we hear otherwise.
+      {
+	    _translationCache.removeByAlias(rxBuffer.getSourceAlias());
+	    //and, kill any pending transmissions between that node and any of ours:
+	    OLCB_Virtual_Node *iter = _handlers;
+    	while(iter)
+	    {
+	      rxBuffer.getSourceNID(&n);
+   	      Serial.println("calling clearBuffer");
+    	  iter->clearBuffer(&n);
+          iter = iter->next;
+      	}
+      }
+      return true;
     }
     return false;
 }
@@ -125,10 +174,13 @@ void OLCB_CAN_Link::update(void)
   }
   else if(can_get_message(&rxBuffer))
   {
-  	//Serial.println("Got message on wire");
-  	//Serial.println(rxBuffer.id, HEX);
-	rxBuffer.setExternal();
-	deliverMessage();
+//  	if(rxBuffer.flags.extended) //ignore standard frames
+//  	{
+      //Serial.println("Got message on wire");
+      //Serial.println(rxBuffer.id, HEX);
+      rxBuffer.setExternal();
+      deliverMessage();
+//    }
   }
   //update alias allocation
   _aliasHelper.update();

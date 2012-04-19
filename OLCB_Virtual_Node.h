@@ -9,39 +9,16 @@
 #include "OLCB_Link.h"
 #include "OLCB_NodeID.h"
 #include "OLCB_Buffer.h"
-#include "OLCB_Handler.h"
 class OLCB_Link;
 
 
 
-class OLCB_Virtual_Node : public OLCB_Handler
+class OLCB_Virtual_Node
 {
  public:
 
-//  virtual void initialize()
-//  {
-//  	_link->addVNode(this);
-//  }
-
   virtual void update(void) {}
   
-  //must be overridden in derived class as such!
-  /*setNID() { OLCB_Virtual_Node::setNID(), OLCB_Event_Handler::setNID(), etc}
-  */
-//  void setNID(OLCB_NodeID *newNID);
-//  void setLink(OLCB_Link *newLink);
-
-
-//TODO THIS IS NOT USED ANY MORE!
-  virtual bool verifyNID(OLCB_NodeID *nid)
-  {
-      if( isPermitted() && ((*nid) == (*NID)) )
-      {
-          return true;
-      }
-      return false;
-  }
-
   bool isPermitted(void)
   {
   	if(NID)
@@ -54,11 +31,27 @@ class OLCB_Virtual_Node : public OLCB_Handler
 	}
   }
   
-  OLCB_Virtual_Node *next;  
- protected:
-
-//  OLCB_NodeID *NID;
-//  OLCB_Link *_link;
+	void create(OLCB_Link *link, OLCB_NodeID *nid)
+	{
+		_link = link;
+		NID = nid;
+	}
+	
+	
+  	virtual bool handleMessage(OLCB_Buffer *buffer)
+  	{
+		return false;
+	}
+	
+	//clears any pending communications between this node and nodeid
+	virtual void clearBuffer(OLCB_NodeID *nodeid)
+	{
+		Serial.println("nothing");
+		return;
+	}
+	OLCB_Virtual_Node *next;
+  	OLCB_Link *_link;
+	OLCB_NodeID *NID;
 };
 
 #endif

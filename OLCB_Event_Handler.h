@@ -25,7 +25,7 @@
 // Mark entry to send a learn message
 #define TEACH_FLAG 0x10
 
-class OLCB_Event_Handler: public OLCB_Handler
+class OLCB_Event_Handler: public OLCB_Virtual_Node
 {
 public:
     virtual void update(void); //this method should be overridden to detect conditions for the production of events
