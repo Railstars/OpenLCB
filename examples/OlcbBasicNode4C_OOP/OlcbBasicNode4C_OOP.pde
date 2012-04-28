@@ -58,36 +58,17 @@ ButtonLed p17(17, LOW); // button on pin 17
 // Basic OpenLCB set-up
 OLCB_CAN_Link link;
 
-class MyEventHandler: public OLCB_Virtual_Node, public OLCB_Event_Handler
+class MyEventHandler: public OLCB_Event_Handler
 {
 public:
     ButtonLed* buttons[8];
     
-    void create(OLCB_Link *link, OLCB_NodeID *nid)
-    {
-      OLCB_Event_Handler::create(link,nid);
-      OLCB_Virtual_Node::create(link,nid);
-    }
-    
-    bool handleMessage(OLCB_Buffer *buffer)
-    {
-      return OLCB_Event_Handler::handleMessage(buffer);
-    }
-
     void initialize(void)
     {
         buttons[0] = buttons[1] = &p14;
         buttons[2] = buttons[3] = &p15;
         buttons[4] = buttons[5] = &p16;
         buttons[6] = buttons[7] = &p17;
-    }
-
-    void update(void)
-    {
-      if(isPermitted())
-      {
-        OLCB_Event_Handler::update(); //called last to permit the new events to be sent out immediately.      
-      }
     }
 
     bool consume(OLCB_Event *event)

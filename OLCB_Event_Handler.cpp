@@ -12,19 +12,23 @@
 
 void OLCB_Event_Handler::update(void) //this method should be overridden to detect conditions for the production of events
 {
+	if(!isPermitted())
+	{
+		return;
+	}
     // see if any replies are waiting to send
-    Serial.println("update===========");
+    //Serial.println("update===========");
     while (_sendEvent < _numEvents)
     {
-    	Serial.print("_sendEvent: ");
-    	Serial.println(_sendEvent);
-    	Serial.print("_numEvents: ");
-    	Serial.println(_numEvents);
+    	//Serial.print("_sendEvent: ");
+    	//Serial.println(_sendEvent);
+    	//Serial.print("_numEvents: ");
+    	//Serial.println(_numEvents);
         // OK to send, see if marked for some cause
         // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
         if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG))
         {
-        	Serial.println("identify produced events!");
+        	//Serial.println("identify produced events!");
             if(_link->sendProducerIdentified(&_events[_sendEvent]))
             {
             	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
@@ -33,7 +37,7 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
         }
         else if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG))
         {
-        	Serial.println("identify consumed events!");
+        	//Serial.println("identify consumed events!");
             if(_link->sendConsumerIdentified(&_events[_sendEvent]))
             {
             	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
@@ -42,7 +46,7 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
         }
         else if (_events[_sendEvent].flags & PRODUCE_FLAG)
         {
-	        Serial.print("producing ");
+	        //Serial.print("producing ");
 	        //Serial.println(_sendEvent, DEC);
             if(_link->sendPCER(&_events[_sendEvent]))
          		_events[_sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag   

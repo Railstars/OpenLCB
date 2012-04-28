@@ -102,7 +102,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 				if(_nodes[index].node) //if there is a real NodeID attached
 				{
 					_nodes[index].state = ALIAS_CID1_STATE;
-					Serial.println("Update: Moving to ALIAS_CID1_STATE");
+					//Serial.println("Update: Moving to ALIAS_CID1_STATE");
 					//Serial.println(_nodes[index].state, HEX);
 				}
 				else //no actual NodeID, so just go to the holding state.
@@ -136,7 +136,7 @@ void OLCB_CAN_Alias_Helper::update(void)
 				{
 					//Serial.println("no go!");
 					_nodes[index].state = ALIAS_CID1_STATE;
-					Serial.println("Update: Reverting to ALIAS_CID1_STATE");
+					//Serial.println("Update: Reverting to ALIAS_CID1_STATE");
 				}
 				break;
 			case ALIAS_CID2_STATE:
@@ -329,7 +329,7 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	}
 	else //we'll need to generate and allocate an alias
 	{
-		Serial.println("allocate: moving to CID1!");
+		//Serial.println("allocate: moving to CID1!");
 		uint32_t lfsr1 = (((uint32_t)nodeID->val[0]) << 16) | (((uint32_t)nodeID->val[1]) << 8) | ((uint32_t)nodeID->val[2]);
 		uint32_t lfsr2 = (((uint32_t)nodeID->val[3]) << 16) | (((uint32_t)nodeID->val[4]) << 8) | ((uint32_t)nodeID->val[5]);
 		slot->alias = (lfsr1 ^ lfsr2 ^ (lfsr1>>12) ^ (lfsr2>>12) )&0xFFF;

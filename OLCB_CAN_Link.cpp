@@ -95,7 +95,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
     else if (rxBuffer.isVerifiedNID())
     {
-    	//Serial.println("!!!! Got VerifiedNID!");
+      //Serial.println("!!!! Got VerifiedNID!");
       // We have a packet that contains a verified NID. We might have requested this. Let's check.
       rxBuffer.getSourceNID(&n); //get the alias from the message header
       rxBuffer.getNodeID(&n); //Get the actual NID from the message body
@@ -113,14 +113,14 @@ bool OLCB_CAN_Link::handleTransportLevel()
     else if(rxBuffer.isAME())
     {
       rxBuffer.getNodeID(&n);
-      Serial.println("Got an AME for:");
+      //Serial.println("Got an AME for:");
       n.print();
       _aliasHelper.sendAMD(&n);
       return true;
     }
     else if(rxBuffer.isAMR()) //is someone releasing their alias? Remove it from the cache.
     {
-      Serial.println("Link: Got AMR");
+      //Serial.println("Link: Got AMR");
       rxBuffer.getSourceNID(&n);
       //n.print();
       _translationCache.removeByAlias(rxBuffer.getSourceAlias());
@@ -128,7 +128,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
       OLCB_Virtual_Node *iter = _handlers;
       while(iter)
       {
-        Serial.println("calling clearBuffer");
+        //Serial.println("calling clearBuffer");
       	iter->clearBuffer(&n);
         iter = iter->next;
       }
@@ -136,7 +136,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
     }
     else if(rxBuffer.isAMD()) //is someone claiming a new alias? Update the cache
     {
-      Serial.println("Link: Got AMD");
+      //Serial.println("Link: Got AMD");
       rxBuffer.getNodeID(&n);
       if(!n.empty())
       {
@@ -153,7 +153,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
     	while(iter)
 	    {
 	      rxBuffer.getSourceNID(&n);
-   	      Serial.println("calling clearBuffer");
+   	      //Serial.println("calling clearBuffer");
     	  iter->clearBuffer(&n);
           iter = iter->next;
       	}
@@ -276,9 +276,17 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   txBuffer.length = len;
   for (uint8_t i = 0; i<txBuffer.length; i++)
          txBuffer.data[i] = datagram->data[i+start];
-  if(txBuffer.length+start < datagram->length) //not yet done!
+  //several possible cases.
+  if(start == 0) //first fragment
   {
-    txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM);
+  	if(txBuffer.length+start < datagram->length) //and last fragment
+  	  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_FIRST);
+  	else
+  	  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY);
+  }
+  else if(txBuffer.length+start < datagram->length) //not yet done!
+  {
+    txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_MIDDLE);
   }
   else //last fragment!
   {
@@ -319,7 +327,7 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
   txBuffer.init(source);
   txBuffer.setDestinationNID(dest);
   txBuffer.setFrameTypeOpenLcb();
-  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
+  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_MESSAGE);
   txBuffer.data[0] = MTI_DATAGRAM_RCV_OK;
   txBuffer.length = 1;
   //Serial.println("Sending ACK");
@@ -336,7 +344,7 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
   txBuffer.init(source);
   txBuffer.setDestinationNID(dest);
   txBuffer.setFrameTypeOpenLcb();
-  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
+  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_MESSAGE);
   txBuffer.data[0] = MTI_DATAGRAM_REJECTED;
   txBuffer.data[1] = (reason>>8)&0xFF;
   txBuffer.data[2] = reason&0xFF;

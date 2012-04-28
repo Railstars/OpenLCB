@@ -8,6 +8,7 @@ bool OLCB_Datagram_Handler::sendDatagram(OLCB_Datagram *datagram)
     	//Serial.println("No free datagram tx buffer!");
         return false;
     }
+    //Serial.println("settting dg buffer to occupied");
     _txDatagramBufferFree = false;
     //Copy the datagram to free the original up for other uses.
     memcpy(_txDatagramBuffer,datagram,sizeof(OLCB_Datagram));
@@ -26,6 +27,10 @@ bool OLCB_Datagram_Handler::isDatagramSent(void)
 
 bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 {
+	if(!isPermitted())
+	{
+		return false;
+	}
 	//Serial.println("datagram handle message");
     //First, make sure we are dealing with a datagram.
     if(!frame->isDatagram())
@@ -34,12 +39,11 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         //see if it is an addressed non-datagram to us, and if it is an expected ACK or NAK
         if(frame->isDatagramAck())
         {
-            //Serial.println("It's an ACK...is it for us!?");
             OLCB_NodeID n;
             frame->getDestinationNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK
             {
-            	//Serial.println("Got an ACK, resetting datagram tx buffer");
+            	//Serial.println("It's an ACK!");
                 datagramResult(true,0);
                 _txDatagramBufferFree = true;
                 return true;
@@ -47,11 +51,11 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         }
         else if(frame->isDatagramNak())
         {
-        	//Serial.println("It's a NAK!");
-            OLCB_NodeID n;
+        	OLCB_NodeID n;
             frame->getDestinationNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK, but NAK'd
             {
+            	//Serial.println("It's a NAK!");
                 uint16_t errorCode = frame->getDatagramNakErrorCode();
                 if(errorCode & DATAGRAM_REJECTED_RESEND_MASK)
                 {
@@ -79,14 +83,16 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     //Note: Sometimes we want to process a datagram regardless of the address. This is the case for what I call "default handlers". If we are marked as such, skip this check.
     OLCB_NodeID n;
     frame->getDestinationNID(&n);
-    //Serial.println("got datagram for");
+    //Serial.print("got datagram fragment for ");
     //n.print();
     //NID->print();
 
     if((NID == 0) || (n != *NID))
     {
+    	//Serial.println("Someone else");
         return false;
     }
+    //Serial.println("us");
 
 
     //we've established it's a datagram, and that it is addressed to us, now what? One of several possibilities.
@@ -100,13 +106,15 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     frame->getSourceNID(&n);
     uint8_t *frame_data = frame->getData();;
     uint8_t frame_length = frame->getLength();
-    if(_rxDatagramBufferFree || n == _rxDatagramBuffer->source)
+    if( (frame->isFirstDatagram() && _rxDatagramBufferFree) ||
+        ( (n == _rxDatagramBuffer->source) && !_rxDatagramBufferFree) ) //first frame and free buffer, or continuing frame and not free buffer
     {
         //begin filling!
 
         //is this the first frame? Need to initialize the datagram buffer
-        if(_rxDatagramBufferFree)
+        if(frame->isFirstDatagram())
         {
+        	//Serial.println("Is first fragment!");
             _rxDatagramBufferFree = false;
             //TODO FOR SOME REASON THE FOLLOWING LINE (or variants on it) CORRUPT THE FIRST TWO BYTES OF
             //_rxDatagramBuffer->source to be 0xc6. WHY GOD WHY!?
@@ -121,7 +129,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             //      n.print();
             //      _rxDatagramBuffer->source->print();
             _rxDatagramBuffer->length = 0;
-            frame->getSourceNID(&(_rxDatagramBuffer->source));
+            frame->getSourceNID(&(_rxDatagramBuffer->source)); //TODO NOTICE that this only gets us the alias, and not the entire NID!!!
             //_rxDatagramBuffer->source.print();
             //_rxDatagramBuffer->destination.print();
             //        n.print(); //TODO this one and the one above are DIFFERENT but should not be!!
@@ -136,33 +144,44 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 
         if(frame->isLastDatagram()) //Last frame? Need to ACK or NAK!
         {
+        	//Serial.println("Is last fragment!");
             if(processDatagram())
             {
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
-                Serial.println("ACKING!");
+                //Serial.println("ACKING!");
                 while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
             }
             else
             {
-            	Serial.println("NAKING!");
+            	//Serial.println("NAKING!");
                 while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_DATAGRAM_TYPE_NOT_ACCEPTED));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }
         return true;
     }
-    else //we can't currently accept this frame, because the buffer is not free
+    else if(frame->isLastDatagram()) //we can't currently accept this frame, either because the buffer is not free, or we didn't see the first datagram fragment
     {
-    	//Serial.println("NAKing datagram, buffer full");
-        while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
+    	if(_rxDatagramBufferFree) //we missed the first frame somehow; perhaps it came while we were processing an earlier datagram
+    	{
+    		//Serial.println("NAKing datagram, missed first frame");
+    		while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER));
+    	}
+    	else
+    	{
+    		//Serial.println("NAKing datagram, buffer full");
+        	while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
+        }
         return true;
     }
-    return false; //should never reach here!
+    return true; //if we reach here, we have a middle DG fragment addressed to us; just don't take any kind of action whatsoever, including sending OptionalInteractionRejected (which is what would happen if we returned false
 }
 
 
 void OLCB_Datagram_Handler::update(void)
 {
+	if(isPermitted())
+	{
     if(_txFlag) //We're in the middle of a transmission
     {
         uint8_t sent = _link->sendDatagramFragment(_txDatagramBuffer, _loc);
@@ -170,6 +189,7 @@ void OLCB_Datagram_Handler::update(void)
         if(!sent && (millis()-_sentTime) > DATAGRAM_ACK_TIMEOUT) //if nothing got transmitted, let's not get hung up. might not happen. Let it go for a couple of seconds, then give up
         {
             //give up
+        	//Serial.println("DG transmission timeout reached, freeing buffer");
             _txDatagramBufferFree = true;
             _txFlag = false;
             datagramResult(false,DATAGRAM_ERROR_ABORTED);
@@ -189,18 +209,19 @@ void OLCB_Datagram_Handler::update(void)
     //If we're not transmitting, but awaiting a response, make sure that the response hasn't timed out!
     else if(!_txDatagramBufferFree && ((millis()-_sentTime) > DATAGRAM_ACK_TIMEOUT) )
     {
+    	//Serial.println("ACK timeout reached, freeing buffer");
         _txDatagramBufferFree = true;
         _txFlag = false;
         datagramResult(false,DATAGRAM_ERROR_ACK_TIMEOUT);
+    }
     }
 }
 
 void OLCB_Datagram_Handler::clearBuffer(OLCB_NodeID *nodeid)
 {
-	Serial.println("Datagram Handler");
 	if((!_rxDatagramBufferFree) && (*nodeid == _rxDatagramBuffer->source))
 	{
-		Serial.println("  clearing buffer");
+		//Serial.println("DG clearing buffer");
 		_rxDatagramBufferFree = true; //kill transmission
 	}
 }

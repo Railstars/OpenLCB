@@ -15,12 +15,12 @@ class OLCB_Link;
 
 class OLCB_Virtual_Node
 {
- public:
+  public:
 
-  virtual void update(void) {}
+    virtual void update(void) {}
   
-  bool isPermitted(void)
-  {
+    bool isPermitted(void)
+    {
   	if(NID)
   	{
 	  	return NID->initialized;
@@ -31,27 +31,27 @@ class OLCB_Virtual_Node
 	}
   }
   
-	void create(OLCB_Link *link, OLCB_NodeID *nid)
-	{
+    void create(OLCB_Link *link, OLCB_NodeID *nid)
+    {
 		_link = link;
 		NID = nid;
 	}
 	
 	
-  	virtual bool handleMessage(OLCB_Buffer *buffer)
-  	{
+    virtual bool handleMessage(OLCB_Buffer *buffer)
+    {
 		return false;
 	}
 	
-	//clears any pending communications between this node and nodeid
-	virtual void clearBuffer(OLCB_NodeID *nodeid)
-	{
-		Serial.println("nothing");
+    //clears any pending communications between this node and nodeid
+    virtual void clearBuffer(OLCB_NodeID *nodeid)
+    {
+		//Serial.println("nothing");
 		return;
 	}
-	OLCB_Virtual_Node *next;
-  	OLCB_Link *_link;
-	OLCB_NodeID *NID;
+    OLCB_Virtual_Node *next;
+    OLCB_Link *_link;
+    OLCB_NodeID *NID;
 };
 
 #endif

@@ -24,7 +24,7 @@
   
   void OLCB_CAN_Buffer::setDataByte(uint8_t byte, uint8_t position)
   {
-  	data[(position>=length)?(length-1):position];
+  	data[(position>=length)?(length-1):position] = byte;
   }
 
 
@@ -54,8 +54,7 @@
   
   void OLCB_CAN_Buffer::setSourceNID(OLCB_NodeID *NID)
   {
-    id &= ~MASK_SRC_ALIAS;
-    id = id | (NID->alias & MASK_SRC_ALIAS);
+    setSourceAlias(NID->alias);
     _source.copy(NID);
   }
   
@@ -65,7 +64,7 @@
     {
       _source.set(0,0,0,0,0,0);
     }
-    _source.alias = (id & MASK_SRC_ALIAS);
+    _source.alias = getSourceAlias();
     NID->copy(&_source);
   }
 
@@ -178,12 +177,12 @@
 
   // is the variable field a destID?
   bool OLCB_CAN_Buffer::isOpenLcDestIdFormat() {
-      return ( getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM);
+      return ( getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_MESSAGE);
   }
   
   // is the variable field a stream ID?
   bool OLCB_CAN_Buffer::isOpenLcbStreamIdFormat() {
-      return ( getOpenLcbFormat() == MTI_FORMAT_STREAM_CODE);
+      return ( getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_STREAM);
   }
   
   void OLCB_CAN_Buffer::setOpenLcbMTI(uint16_t fmt, uint16_t mtiHeaderByte) {
@@ -210,7 +209,7 @@
   
   bool OLCB_CAN_Buffer::isRejectOptionalInteraction(void)
   {
-    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
+    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_MESSAGE)) )
       return false;
     return (data[0] == ((MTI_OPTION_INT_REJECTED)&0xFF) );
   }
@@ -218,36 +217,36 @@
   void OLCB_CAN_Buffer::setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest)
   {
     init(dest->alias);
-    setOpenLcbMTI(MTI_FORMAT_ADDRESSED_NON_DATAGRAM,source->alias);
+    setOpenLcbMTI(MTI_FORMAT_ADDRESSED_MESSAGE,source->alias);
     length=1;
     data[0] = MTI_OPTION_INT_REJECTED;
   }
     
   void OLCB_CAN_Buffer::setPCEventReport(OLCB_Event* eid) {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI,MTI_PC_EVENT_REPORT);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_PC_EVENT_REPORT);
     length=8;
     loadFromEid(eid);
   }
   
   bool OLCB_CAN_Buffer::isPCEventReport() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_PC_EVENT_REPORT);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_PC_EVENT_REPORT);
   }
 
   void OLCB_CAN_Buffer::setLearnEvent(OLCB_Event* eid) {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI,MTI_LEARN_EVENT);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_LEARN_EVENT);
     length=8;
     loadFromEid(eid);
   }
 
   bool OLCB_CAN_Buffer::isLearnEvent() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_LEARN_EVENT);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_LEARN_EVENT);
   }
 
   void OLCB_CAN_Buffer::setInitializationComplete(OLCB_NodeID* nid) {
     init(nid->alias);
-    setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_INITIALIZATION_COMPLETE);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_INITIALIZATION_COMPLETE);
     length=6;
     memcpy(data, nid->val, 6);
     //data[0] = nid->val[0];
@@ -259,7 +258,7 @@
   }
   
   bool OLCB_CAN_Buffer::isInitializationComplete() {
-      return isOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI, MTI_INITIALIZATION_COMPLETE);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_INITIALIZATION_COMPLETE);
   }
   
   void OLCB_CAN_Buffer::getEventID(OLCB_Event* evt) {
@@ -291,9 +290,12 @@
   bool OLCB_CAN_Buffer::getDestinationNID(OLCB_NodeID *nid)
   {
     //Only do anything if this is an addressed frame
-    if( (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM) ||
+    if( (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_STREAM) ||
+    	(getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY) ||
+    	(getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_FIRST) ||
+    	(getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_MIDDLE) ||
         (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_LAST) ||
-        (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM) )
+        (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_MESSAGE) )
     {
       if(_destination.empty())
       {
@@ -317,18 +319,18 @@
   void OLCB_CAN_Buffer::setVerifyNID(OLCB_NodeID* nid)
   {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID_GLOBAL);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_VERIFY_NID_GLOBAL);
     length = 6;
     memcpy(data, nid->val, 6);
   }
 
   bool OLCB_CAN_Buffer::isVerifyNIDGlobal() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFY_NID_GLOBAL);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_VERIFY_NID_GLOBAL);
   }
 
   bool OLCB_CAN_Buffer::isVerifyNIDAddressed()
   {
-      if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
+      if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_MESSAGE) return false;
       if (length == 0) return false;
       if (data[0] != MTI_VERIFY_NID_ADDRESSED) return false;
       return true;
@@ -336,12 +338,12 @@
   
   bool OLCB_CAN_Buffer::isVerifiedNID()
   {
-    return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFIED_NID);
+    return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_VERIFIED_NID);
   }
 
   void OLCB_CAN_Buffer::setVerifiedNID(OLCB_NodeID* nid) {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_VERIFIED_NID);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_VERIFIED_NID);
     length=6;
     memcpy(data, nid->val, 6);
     //data[0] = nid->val[0];
@@ -353,12 +355,12 @@
   }
 
   bool OLCB_CAN_Buffer::isIdentifyConsumers() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_CONSUMERS);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_IDENTIFY_CONSUMERS);
   }
 
   void OLCB_CAN_Buffer::setConsumerIdentified(OLCB_Event* eid) {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_CONSUMER_IDENTIFIED);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_CONSUMER_IDENTIFIED);
     length=8;
     loadFromEid(eid);
   }
@@ -366,18 +368,18 @@
   void OLCB_CAN_Buffer::setConsumerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask) {
     // does send a message, but not complete yet - RGJ 2009-06-14
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_IDENTIFY_CONSUMERS_RANGE);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_IDENTIFY_CONSUMERS_RANGE);
     length=8;
     loadFromEid(eid);
   }
 
   bool OLCB_CAN_Buffer::isIdentifyProducers() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_PRODUCERS);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_IDENTIFY_PRODUCERS);
   }
 
   void OLCB_CAN_Buffer::setProducerIdentified(OLCB_Event* eid) {
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_PRODUCER_IDENTIFIED);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_PRODUCER_IDENTIFIED);
     length=8;
     loadFromEid(eid);
   }
@@ -385,17 +387,17 @@
   void OLCB_CAN_Buffer::setProducerIdentifyRange(OLCB_Event* eid, OLCB_Event* mask) {
     // does send a message, but not complete yet - RGJ 2009-06-14
 //    init(nodeAlias);
-    setOpenLcbMTI(MTI_FORMAT_COMPLEX_MTI,MTI_IDENTIFY_PRODUCERS_RANGE);
+    setOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE,MTI_IDENTIFY_PRODUCERS_RANGE);
     length=8;
     loadFromEid(eid);
   }
 
   bool OLCB_CAN_Buffer::isIdentifyEvents() {
-      return isOpenLcbMTI(MTI_FORMAT_SIMPLE_MTI, MTI_IDENTIFY_EVENTS);
+      return isOpenLcbMTI(MTI_FORMAT_UNADDRESSED_MESSAGE, MTI_IDENTIFY_EVENTS);
   }
   
   bool OLCB_CAN_Buffer::isIdentifyEventsAddressed() {
-      if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
+      if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_MESSAGE) return false;
       if (length == 0) return false;
       if (data[0] != MTI_IDENTIFY_EVENTS_ADDRESSED) return false;
       return true;
@@ -416,25 +418,35 @@
   // general, but not efficient
   bool OLCB_CAN_Buffer::isDatagram() {
     return isFrameTypeOpenLcb() &&
-      ((getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM) || 
+      ((getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY) ||
+       (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_FIRST) ||
+       (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_MIDDLE) ||
        (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_LAST));
   }
   
   // just checks 1st, assumes datagram already checked.
   bool OLCB_CAN_Buffer::isLastDatagram() {
-    return isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_LAST);
+    return isFrameTypeOpenLcb() && 
+    		( (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY) ||
+    		  (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_LAST) );
+  }
+  
+  bool OLCB_CAN_Buffer::isFirstDatagram() {
+    return isFrameTypeOpenLcb() && 
+    		( (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY) ||
+    		  (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_DATAGRAM_FIRST) );
   }
   
   bool OLCB_CAN_Buffer::isDatagramAck()
   {
-    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
+    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_MESSAGE)) )
       return false;
     return (data[0] == ((MTI_DATAGRAM_RCV_OK)&0xFF) );
   }
   
   bool OLCB_CAN_Buffer::isDatagramNak()
   {
-    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_NON_DATAGRAM)) )
+    if(! (isFrameTypeOpenLcb() && (getOpenLcbFormat() == MTI_FORMAT_ADDRESSED_MESSAGE)) )
       return false;
     return (data[0] == ((MTI_DATAGRAM_REJECTED)&0xFF) );
   }
@@ -453,7 +465,7 @@
   
   
 bool OLCB_CAN_Buffer::isProtocolSupportInquiry() {
-  if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_NON_DATAGRAM) return false;
+  if (getOpenLcbFormat() != MTI_FORMAT_ADDRESSED_MESSAGE) return false;
   if (length == 0) return false;
   if ( ((data[0]<<8)|data[1]) != MTI_PROTOCOL_SUPPORT_INQUIRY) return false;
   return true;

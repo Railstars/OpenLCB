@@ -11,7 +11,7 @@
 #define DATAGRAM_ERROR_ABORTED 0x1001
 #define DATAGRAM_ERROR_ACK_TIMEOUT 0x1002
 
-// A mix-in class for handling the datagram protocol.
+// An abstract class for handling the datagram protocol.
 
 class OLCB_Datagram_Handler : public OLCB_Virtual_Node
 {
@@ -27,7 +27,7 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
 #endif
   }
     
-  virtual bool handleMessage(OLCB_Buffer *frame);
+  bool handleMessage(OLCB_Buffer *frame);
   
   virtual void update(void);
   

@@ -7,16 +7,15 @@
 #include "OLCB_Event.h"
 
 /**
- * OpenLCB CAN MTI format (3 bits)
+ * OpenLCB CAN MTI format (4 bits)
  */
-#define MTI_FORMAT_SIMPLE_MTI               0    
-#define MTI_FORMAT_COMPLEX_MTI              1
-//
-//
-#define MTI_FORMAT_ADDRESSED_DATAGRAM       4    
-#define MTI_FORMAT_ADDRESSED_DATAGRAM_LAST  5    
-#define MTI_FORMAT_ADDRESSED_NON_DATAGRAM   6    
-#define MTI_FORMAT_STREAM_CODE              7    
+#define MTI_FORMAT_UNADDRESSED_MESSAGE		 0x8
+#define MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY	 0xA
+#define MTI_FORMAT_ADDRESSED_DATAGRAM_FIRST  0xB
+#define MTI_FORMAT_ADDRESSED_DATAGRAM_MIDDLE 0xC
+#define MTI_FORMAT_ADDRESSED_DATAGRAM_LAST	 0xD
+#define MTI_FORMAT_ADDRESSED_MESSAGE		 0xE
+#define MTI_FORMAT_ADDRESSED_STREAM          0xF
 
 
 /**
@@ -29,21 +28,21 @@
  
 #define MTI_INITIALIZATION_COMPLETE     0x087
 
-#define MTI_VERIFY_NID_GLOBAL           0x0A7
-#define MTI_VERIFIED_NID                0x0B7
+#define MTI_VERIFY_NID_GLOBAL           0x8A7
+#define MTI_VERIFIED_NID                0x8B7
 
-#define MTI_IDENTIFY_CONSUMERS          0x24F
+#define MTI_IDENTIFY_CONSUMERS          0xA4F
 #define MTI_IDENTIFY_CONSUMERS_RANGE    0x25F
 #define MTI_CONSUMER_IDENTIFIED         0x26B
 
-#define MTI_IDENTIFY_PRODUCERS          0x28F
+#define MTI_IDENTIFY_PRODUCERS          0xA8F
 #define MTI_IDENTIFY_PRODUCERS_RANGE    0x29F
 #define MTI_PRODUCER_IDENTIFIED         0x2AB
 
-#define MTI_IDENTIFY_EVENTS             0x2B7
+#define MTI_IDENTIFY_EVENTS             0xAB7
 
-#define MTI_LEARN_EVENT                 0x2CF
-#define MTI_PC_EVENT_REPORT             0x2DF
+#define MTI_LEARN_EVENT                 0xACF
+#define MTI_PC_EVENT_REPORT             0xADF
 
 /**
  * basic 8-bit Message Type byte values (from data[0])
@@ -86,19 +85,19 @@
 #define MASK_SRC_ALIAS 0x00000FFFL
 
 // bit 2-16
-#define MASK_VARIABLE_FIELD 0x07FFF000L
+#define MASK_VARIABLE_FIELD 0x0FFFF000L
 #define MASK_DEST_ALIAS      0x00FFF000L
 #define SHIFT_VARIABLE_FIELD 12
 
 // bit 2-4, at the top of the variable field
-#define MASK_OPENLCB_FORMAT 0x07000L
+#define MASK_OPENLCB_FORMAT 0xF000L
 #define SHIFT_OPENLCB_FORMAT 12
 
 
 /**
  * Originally OpenLcbCanBuffer, name changed to reflect fork of original codebase.
  *
- * Class to handle transforming OpenLCB (S9.6) frames to/from std CAN frames.
+ * Class to handle transforming OpenLCB (S9.7) frames to/from std CAN frames.
  * <p>
  * We're trying to localize the formating of frames to/from the node here,
  * so that only this class needs to change when/if the wire protocol changes.
@@ -107,7 +106,7 @@
   public: 
   
   //access to payload
-  uint8_t * getData(void);
+  uint8_t *getData(void);
   uint8_t getLength(void);
   void setLength(uint8_t length);
   void setData(uint8_t *bytes, uint8_t length);
@@ -227,6 +226,7 @@
 // datagram related messages
   bool isDatagram(void);
   bool isLastDatagram(void);
+  bool isFirstDatagram(void);
   bool isDatagramAck(void);
   bool isDatagramNak(void);
   void setDatagram(void);
