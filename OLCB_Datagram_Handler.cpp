@@ -145,7 +145,8 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         if(frame->isLastDatagram()) //Last frame? Need to ACK or NAK!
         {
         	//Serial.println("Is last fragment!");
-            if(processDatagram())
+        	uint16_t errorcode = processDatagram();
+            if(errorcode == DATAGRAM_ERROR_OK)
             {
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
                 //Serial.println("ACKING!");
@@ -154,7 +155,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             else
             {
             	//Serial.println("NAKING!");
-                while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_DATAGRAM_TYPE_NOT_ACCEPTED));
+                while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }

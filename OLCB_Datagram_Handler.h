@@ -7,6 +7,8 @@
 #include "OLCB_Virtual_Node.h"
 #include "OLCB_Datagram.h"
 
+#define DATAGRAM_ERROR_OK 0xFFFF //assume this won't get used as an error code. HACK!
+
 #define DATAGRAM_ACK_TIMEOUT 5000
 #define DATAGRAM_ERROR_ABORTED 0x1001
 #define DATAGRAM_ERROR_ACK_TIMEOUT 0x1002
@@ -32,7 +34,7 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
   virtual void update(void);
   
   //This method, and maybe the next, must be fleshed out in a derived class to be of much use.
-  virtual bool processDatagram(void) {return false;}
+  virtual uint16_t processDatagram(void) {return false;}
   virtual void datagramResult(bool accepted, uint16_t errorcode) {return;}
   
   bool sendDatagram(OLCB_Datagram *datagram);
