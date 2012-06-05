@@ -158,7 +158,7 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 		if(buffer->isIdentifyEventsAddressed()) //addressed variant
 		{
 		    OLCB_NodeID n;
-    		frame->getDestinationNID(&n);
+    		buffer->getDestinationNID(&n);
    			//Serial.print("got Identify Events for ");
    			//n.print();
    			//NID->print();
