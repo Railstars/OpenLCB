@@ -155,11 +155,15 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
     {
     	//Serial.println("IdentifyEvents");
         // See if addressed to us
-        OLCB_NodeID n;
 		if(buffer->isIdentifyEventsAddressed()) //addressed variant
 		{
-			//Serial.println("addressed...");
-			buffer->getNodeID(&n);
+		    OLCB_NodeID n;
+    		frame->getDestinationNID(&n);
+   			//Serial.print("got Identify Events for ");
+   			//n.print();
+   			//NID->print();
+
+			buffer->getDestinationNID(&n);
 			if(n.empty() || NID->sameNID(&n))//addressed to us
 			{
 				//Serial.println("to us!");
