@@ -172,14 +172,15 @@ void OLCB_CAN_Link::update(void)
   	deliverMessage();
 	rxBuffer.setExternal(); //so we don't read it again
   }
-  else if(can_get_message(&rxBuffer))
+  if(can_get_message(&rxBuffer))
   {
-//  	if(rxBuffer.flags.extended) //ignore standard frames
+//  	if(rxBuffer.flags.extended) //ignore standard frames TODO THIS MUST BE UNCOMMENTED FOR MCP2515 USE!
 //  	{
       //Serial.println("Got message on wire");
       //Serial.println(rxBuffer.id, HEX);
       rxBuffer.setExternal();
       deliverMessage();
+      wasActive = true;
 //    }
   }
   //update alias allocation
@@ -236,6 +237,7 @@ void OLCB_CAN_Link::deliverMessage(void)
       }
       iter = iter->next;
     }
+    //TODO why do we only care about external messages here? Shouldn't vnodes be able to send rejections to other vnodes?
     if(rxBuffer.isExternal() && dest_node && !handled) //if it came from the outside, and was addressed to one of ours, and it went unhandled, then:
     {
     	//Serial.println("Message was external, addressed to us, and not handled");
@@ -483,9 +485,19 @@ bool OLCB_CAN_Link::sendMessage()
     while(!can_send_message(&txBuffer));
     
     //now, send it to us!
+    //TODO Notice that the buffer will get clobbered if there's more than one call to sendMessage in an update loop!!
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
-	rxBuffer.setInternal();
-    //deliverMessage(); //send the message to local nodes
+	rxBuffer.setInternal(); //make sure this one gets sent only to internal vnodes, and not treated as having come from the wire.
     
     return true;
+}
+
+bool OLCB_CAN_Link::wasActiveSet()
+{
+    return wasActive;
+}
+
+void OLCB_CAN_Link::resetWasActive()
+{
+    wasActive = false;
 }

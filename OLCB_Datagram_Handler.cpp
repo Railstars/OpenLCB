@@ -150,11 +150,13 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             {
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
                 //Serial.println("ACKING!");
+                //TODO BROKEN! SHOULD NOT DO THIS!!!
                 while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
             }
             else
             {
             	//Serial.println("NAKING!");
+            	//TODO BROKEN! SHOULD NOT DO THIS!!!
                 while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
@@ -166,11 +168,13 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     	if(_rxDatagramBufferFree) //we missed the first frame somehow; perhaps it came while we were processing an earlier datagram
     	{
     		//Serial.println("NAKing datagram, missed first frame");
+    		//TODO BROKEN! SHOULD NOT DO THIS!!!
     		while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER));
     	}
     	else
     	{
     		//Serial.println("NAKing datagram, buffer full");
+    		//TODO BROKEN! SHOULD NOT DO THIS!!!
         	while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
         }
         return true;
@@ -181,9 +185,11 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 
 void OLCB_Datagram_Handler::update(void)
 {
-	if(isPermitted())
+	if(!isPermitted())
 	{
-    if(_txFlag) //We're in the middle of a transmission
+		return;
+	}
+    else if(_txFlag) //We're in the middle of a transmission
     {
         uint8_t sent = _link->sendDatagramFragment(_txDatagramBuffer, _loc);
         //TODO We should be checking for a 0 result here, as that might indicate trouble
@@ -214,7 +220,6 @@ void OLCB_Datagram_Handler::update(void)
         _txDatagramBufferFree = true;
         _txFlag = false;
         datagramResult(false,DATAGRAM_ERROR_ACK_TIMEOUT);
-    }
     }
 }
 

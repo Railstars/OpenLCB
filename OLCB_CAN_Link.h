@@ -137,6 +137,8 @@ class OLCB_CAN_Link : public OLCB_Link
   void addVNode(OLCB_Virtual_Node *vnode);
   void removeVNode(OLCB_Virtual_Node *vnode);
   
+  bool wasActiveSet();
+  void resetWasActive();
   
   //friend class OLCB_CAN_Alias_Helper;
  //protected:
@@ -178,6 +180,7 @@ class OLCB_CAN_Link : public OLCB_Link
   bool sendAME(OLCB_NodeID *nid);
   
   bool internalMessage;
+  bool wasActive;
 };
 
 #endif //__OLCB_LINK_H__

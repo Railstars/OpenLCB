@@ -51,6 +51,8 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
   bool _txDatagramBufferFree;
   uint32_t _sentTime;
   bool _txFlag;
+  bool _ackFlag;
+  uint16_t _ackReason;
   uint8_t _loc;
   
   //TODO MAKE THESE NOT POINTERS

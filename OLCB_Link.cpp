@@ -3,12 +3,15 @@
 void OLCB_Link::update(void)//called repeatedly
 {
   //call all our handler's update functions
-  OLCB_Virtual_Node *iter = _handlers;
-  while(iter)
-  {
+  //Updated to only call one at a time, to permit faster message handling.
+  static OLCB_Virtual_Node *iter = _handlers;
+  //while(iter)
+  //{
     iter->update();
     iter = iter->next;
-  }
+    if(!iter) //reached end of list
+    	iter = _handlers; //return to beginning for next time.
+  //}
 }
   
 void OLCB_Link::addVNode(OLCB_Virtual_Node *vnode)
