@@ -7,7 +7,7 @@
 #include "OLCB_Virtual_Node.h"
 #include "OLCB_Datagram.h"
 
-#define DATAGRAM_ERROR_OK 0xFFFF //assume this won't get used as an error code. HACK!
+#define DATAGRAM_ERROR_OK 0xFFF0 //assume this won't get used as an error code. HACK!
 
 #define DATAGRAM_ACK_TIMEOUT 5000
 #define DATAGRAM_ERROR_ABORTED 0x1001
@@ -18,7 +18,7 @@
 class OLCB_Datagram_Handler : public OLCB_Virtual_Node
 {
  public:
-  OLCB_Datagram_Handler() : _rxDatagramBufferFree(true), _txDatagramBufferFree(true), _sentTime(0), _txFlag(false), _loc(0)
+  OLCB_Datagram_Handler() : _rxDatagramBufferFree(true), _txDatagramBufferFree(true), _sentTime(0), _txFlag(false), _loc(0), _ackReason(0xFFFF)
   {
 #if defined(__arm__)
     _rxDatagramBuffer = new OLCB_Datagram;
@@ -44,20 +44,21 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
   void clearBuffer(OLCB_NodeID *nodeid);
 
  protected:
- 
+  void sendAck(OLCB_NodeID *dest);
+  void sendNak(OLCB_NodeID *dest, uint16_t reason);
+  
  //TODO condense all these bools into a bitfield
 //  bool _initialized;
   bool _rxDatagramBufferFree;
   bool _txDatagramBufferFree;
   uint32_t _sentTime;
   bool _txFlag;
-  bool _ackFlag;
-  uint16_t _ackReason;
   uint8_t _loc;
-  
-  //TODO MAKE THESE NOT POINTERS
   OLCB_Datagram *_rxDatagramBuffer;
   OLCB_Datagram *_txDatagramBuffer;
+  
+  OLCB_NodeID _ackDest;
+  uint16_t _ackReason;
 };
 
 #endif

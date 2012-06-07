@@ -485,10 +485,10 @@ bool OLCB_CAN_Link::sendMessage()
     while(!can_send_message(&txBuffer));
     
     //now, send it to us!
-    //TODO Notice that the buffer will get clobbered if there's more than one call to sendMessage in an update loop!!
+    //Notice that the buffer DOES NOT get clobbered, as only one vnode is ever updated during the update loop; so long as sendMessage is only called once per vnode per update. Notice that sending a message from handleMessage will clobber the message currently being handled.
 	memcpy(&rxBuffer,&txBuffer, sizeof(OLCB_CAN_Buffer)); //copy the message into the txBuffer
-	rxBuffer.setInternal(); //make sure this one gets sent only to internal vnodes, and not treated as having come from the wire.
-    
+	rxBuffer.setInternal();
+	    
     return true;
 }
 

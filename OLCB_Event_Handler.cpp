@@ -255,8 +255,11 @@ bool OLCB_Event_Handler::handleIdentifyConsumers(OLCB_Event *event)
     bool retval = false;
     int index = 0;
     // find consumers of event
+    event->print();
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
+    	//Serial.print("found event at ");
+    	//Serial.println(index, DEC);
         // yes, we have to reply with ConsumerIdentified
         if (_events[index].flags & OLCB_Event::CAN_CONSUME_FLAG)
         {
@@ -267,6 +270,7 @@ bool OLCB_Event_Handler::handleIdentifyConsumers(OLCB_Event *event)
         ++index;
         if (index>=_numEvents) break;
     }
+    //Serial.println(index, DEC);
     return retval;
 }
 

@@ -109,19 +109,19 @@ class OLCB_Alias_Cache
   
   bool removeByAlias(uint16_t alias)
   {
-  	Serial.print("alias helper: ");
+    //Serial.print("alias helper: ");
     for(uint8_t i=0; i < _size; ++i)
     {
       if(_nids[i].alias == alias)
       {
-      	Serial.print("removing alias at loc ");
-      	Serial.print(i, DEC);
+      	//Serial.print("removing alias at loc ");
+      	//Serial.print(i, DEC);
         _nids[i].set(0,0,0,0,0,0);
         _hits[i] = 0;
         return true;
       }
     }
-    Serial.println();
+    //Serial.println();
     return false; //not in cache
   }
   

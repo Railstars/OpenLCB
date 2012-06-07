@@ -151,13 +151,15 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
                 //Serial.println("ACKING!");
                 //TODO BROKEN! SHOULD NOT DO THIS!!!
-                while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
+                sendAck(&(_rxDatagramBuffer->source));
+                //while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
             }
             else
             {
             	//Serial.println("NAKING!");
             	//TODO BROKEN! SHOULD NOT DO THIS!!!
-                while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));
+                sendNak(&(_rxDatagramBuffer->source), errorcode);
+                //while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));
             }
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }
@@ -169,25 +171,50 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     	{
     		//Serial.println("NAKing datagram, missed first frame");
     		//TODO BROKEN! SHOULD NOT DO THIS!!!
-    		while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER));
+    		sendNak(&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_OUT_OF_ORDER);
+    		//while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER));
     	}
     	else
     	{
     		//Serial.println("NAKing datagram, buffer full");
     		//TODO BROKEN! SHOULD NOT DO THIS!!!
-        	while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
+    		sendNak(&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_BUFFER_FULL);
+        	//while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
         }
         return true;
     }
     return true; //if we reach here, we have a middle DG fragment addressed to us; just don't take any kind of action whatsoever, including sending OptionalInteractionRejected (which is what would happen if we returned false
 }
 
+void OLCB_Datagram_Handler::sendNak(OLCB_NodeID *dest, uint16_t reason)
+{
+	memcpy(&_ackDest, dest, sizeof(OLCB_NodeID));
+	_ackReason = reason;
+}
+
+void OLCB_Datagram_Handler::sendAck(OLCB_NodeID *dest)
+{
+	memcpy(&_ackDest, dest, sizeof(OLCB_NodeID));
+	_ackReason = DATAGRAM_ERROR_OK;
+}
 
 void OLCB_Datagram_Handler::update(void)
 {
 	if(!isPermitted())
 	{
 		return;
+	}
+	else if(_ackReason != 0xFFFF) //we have an ack or nak to send
+	{
+		if(_ackReason == DATAGRAM_ERROR_OK)
+		{
+			while(!_link->ackDatagram(NID, &_ackDest));
+		}
+		else
+		{
+			while(!_link->nakDatagram(NID, &_ackDest, DATAGRAM_REJECTED_BUFFER_FULL));
+		}
+		_ackReason = 0xFFFF;
 	}
     else if(_txFlag) //We're in the middle of a transmission
     {
