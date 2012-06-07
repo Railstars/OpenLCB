@@ -114,7 +114,7 @@ bool OLCB_CAN_Link::handleTransportLevel()
     {
       rxBuffer.getNodeID(&n);
       //Serial.println("Got an AME for:");
-      n.print();
+      //n.print();
       _aliasHelper.sendAMD(&n);
       return true;
     }

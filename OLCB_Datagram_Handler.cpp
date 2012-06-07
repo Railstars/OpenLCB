@@ -43,7 +43,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             frame->getDestinationNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK
             {
-            	//Serial.println("It's an ACK!");
+            	//Serial.println("Got an ACK, freeing TX buffer");
                 datagramResult(true,0);
                 _txDatagramBufferFree = true;
                 return true;
@@ -104,6 +104,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 
     // check the source for this datagram against our receive buffer
     frame->getSourceNID(&n);
+
     uint8_t *frame_data = frame->getData();;
     uint8_t frame_length = frame->getLength();
     if( (frame->isFirstDatagram() && _rxDatagramBufferFree) ||
@@ -146,6 +147,8 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         {
         	//Serial.println("Is last fragment!");
         	uint16_t errorcode = processDatagram();
+        	//Serial.print("from processDatagram, received result code ");
+        	//Serial.println(errorcode, HEX);
             if(errorcode == DATAGRAM_ERROR_OK)
             {
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
@@ -170,15 +173,13 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     	if(_rxDatagramBufferFree) //we missed the first frame somehow; perhaps it came while we were processing an earlier datagram
     	{
     		//Serial.println("NAKing datagram, missed first frame");
-    		//TODO BROKEN! SHOULD NOT DO THIS!!!
-    		sendNak(&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_OUT_OF_ORDER);
+    		sendNak(&n, DATAGRAM_REJECTED_OUT_OF_ORDER);
     		//while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER));
     	}
     	else
     	{
     		//Serial.println("NAKing datagram, buffer full");
-    		//TODO BROKEN! SHOULD NOT DO THIS!!!
-    		sendNak(&(_rxDatagramBuffer->source), DATAGRAM_REJECTED_BUFFER_FULL);
+    		sendNak(&n, DATAGRAM_REJECTED_BUFFER_FULL);
         	//while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
         }
         return true;
@@ -212,7 +213,7 @@ void OLCB_Datagram_Handler::update(void)
 		}
 		else
 		{
-			while(!_link->nakDatagram(NID, &_ackDest, DATAGRAM_REJECTED_BUFFER_FULL));
+			while(!_link->nakDatagram(NID, &_ackDest, _ackReason));
 		}
 		_ackReason = 0xFFFF;
 	}

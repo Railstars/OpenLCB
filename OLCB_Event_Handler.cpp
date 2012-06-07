@@ -255,7 +255,7 @@ bool OLCB_Event_Handler::handleIdentifyConsumers(OLCB_Event *event)
     bool retval = false;
     int index = 0;
     // find consumers of event
-    event->print();
+    //event->print();
     while (-1 != (index = event->findIndexInArray(_events, _numEvents, index)))
     {
     	//Serial.print("found event at ");
