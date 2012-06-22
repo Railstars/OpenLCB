@@ -69,7 +69,7 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
   return true;
 }
 
-bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest)
+bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* dest, OLCB_NodeID* source)
 {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   txBuffer.setRejectOptionalInteraction(source, dest);
