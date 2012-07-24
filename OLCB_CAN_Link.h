@@ -83,7 +83,7 @@ class OLCB_CAN_Alias_Helper
     void reAllocateAlias(private_nodeID_t* nodeID);
     bool releaseAlias(OLCB_NodeID* nodeID);
     void idleAlias(OLCB_NodeID* nodeID);
-    void verifyNID(OLCB_NodeID* nodeID);
+    void verifyNID(OLCB_CAN_Buffer *buf);
     void sendAMD(OLCB_NodeID* nodeID);
   private:
     //methods
@@ -124,12 +124,12 @@ class OLCB_CAN_Link : public OLCB_Link
   bool sendVerifiedNID(OLCB_NodeID *nid);
   bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request);
 
-  bool sendIdent(void);
+  bool sendIdent(OLCB_NodeID* source);
   
-  bool sendPCER(OLCB_Event *event);
-  bool sendConsumerIdentified(OLCB_Event *event);
-  bool sendLearnEvent(OLCB_Event *event);
-  bool sendProducerIdentified(OLCB_Event *event);
+  bool sendPCER(OLCB_NodeID* source, OLCB_Event *event);
+  bool sendConsumerIdentified(OLCB_NodeID* source, OLCB_Event *event);
+  bool sendLearnEvent(OLCB_NodeID* source, OLCB_Event *event);
+  bool sendProducerIdentified(OLCB_NodeID* source, OLCB_Event *event);
 
   bool sendMessage(OLCB_Buffer *msg); //send an arbitrary message
   

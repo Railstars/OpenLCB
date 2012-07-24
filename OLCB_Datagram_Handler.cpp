@@ -40,7 +40,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         if(frame->isDatagramAck())
         {
             OLCB_NodeID n;
-            frame->getDestinationNID(&n);
+            frame->getDestNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK
             {
             	//Serial.println("Got an ACK, freeing TX buffer");
@@ -52,7 +52,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         else if(frame->isDatagramNak())
         {
         	OLCB_NodeID n;
-            frame->getDestinationNID(&n);
+            frame->getDestNID(&n);
             if(NID != 0 && n == *NID) //Yay! datagram sent OK, but NAK'd
             {
             	//Serial.println("It's a NAK!");
@@ -82,7 +82,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     //now, check to see if this datagram is addressed to us. If not, ignore it. (Also, reject if we don't have a NID set!)
     //Note: Sometimes we want to process a datagram regardless of the address. This is the case for what I call "default handlers". If we are marked as such, skip this check.
     OLCB_NodeID n;
-    frame->getDestinationNID(&n);
+    frame->getDestNID(&n);
     //Serial.print("got datagram fragment for ");
     //n.print();
     //NID->print();

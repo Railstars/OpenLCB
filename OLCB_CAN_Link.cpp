@@ -84,12 +84,15 @@ bool OLCB_CAN_Link::handleTransportLevel()
 	//Serial.println("handleTransportLevel");
 	OLCB_NodeID n(0,0,0,0,0,0);
     // see if this is a Verify request to us; first check type
-    if (rxBuffer.isVerifyNIDGlobal() || rxBuffer.isVerifyNIDAddressed())
+    if (rxBuffer.isVerifyNID())
     {
-      // check address
-      rxBuffer.getNodeID(&n);
+    	//if this is a request for any of our vnodes to respond with a verifiednodeid, we should do so.
+    	//if is global with empty payload, all vnodes respond, full stop.
+    	//if is global with NodeID, and one vnode matches, respond.
+    	//if is addressed, and alias matches, respond.
+    	//if is addressed, and nodeIde matches, respond.
       //pass it off to the alias helper, since it maintains a definitive list of registered nodeIDs
-      _aliasHelper.verifyNID(&n);
+      _aliasHelper.verifyNID(&rxBuffer);
       return true;
     }
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
@@ -207,11 +210,11 @@ void OLCB_CAN_Link::deliverMessage(void)
     if(_translationCache.getNIDByAlias(&n)) //attempt to fill it in with a NID from the cache
       rxBuffer.setSourceNID(&n); //overwrite the original with the full NID
     //now, see if it has a destination, and if it's in the cache too
-    if(rxBuffer.getDestinationNID(&n))
+    if(rxBuffer.getDestNID(&n))
     {
       //see if we can pull the actual NID from the cache
       if(_translationCache.getNIDByAlias(&n))
-        rxBuffer.setDestinationNID(&n);
+        rxBuffer.setDestNID(&n);
     }
     else
     {
@@ -253,7 +256,7 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   //returns the number of bytes sent.
   //Serial.println("sendDGfragment");
   //datagram->destination.print();
-  if(!datagram->destination.alias)
+  if(!datagram->destination.alias) //there is no alias here. We'll need to look it up.
   {
     //try the cache
     uint16_t alias = _translationCache.getAliasByNID(&(datagram->destination));
@@ -263,17 +266,14 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
       //need to ask
       //Serial.println("Link: Gonna have to ask with a VerifyNID");
       sendVerifyNID(&(datagram->source), &(datagram->destination)); //if it can't go through, it'll get called again. no need to loop.
-      return 0;
+      return 0; //wait to transmit until we know what the proper alias is.
     }
   }
   //datagram->destination.print();
   //now, figure out how many bytes remain, and whether this is the last fragment that needs to be sent.
   // Notice that the CAN link can send 8 bytes per frame.
   //set the source, and init the buffer.
-  txBuffer.init(&(datagram->source));
-  //set the destination
-  txBuffer.setDestinationNID(&(datagram->destination));
-  txBuffer.setFrameTypeOpenLcb();
+  
   uint8_t len = min(datagram->length-start,8);
   txBuffer.length = len;
   for (uint8_t i = 0; i<txBuffer.length; i++)
@@ -282,17 +282,17 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   if(start == 0) //first fragment
   {
   	if(txBuffer.length+start < datagram->length) //and last fragment
-  	  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_FIRST);
+  	  txBuffer.setFirstDatagram(&(datagram->source), &(datagram->destination));
   	else
-  	  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_ONLY);
+  	  txBuffer.setOnlyDatagram(&(datagram->source), &(datagram->destination));
   }
   else if(txBuffer.length+start < datagram->length) //not yet done!
   {
-    txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_MIDDLE);
+    txBuffer.setMiddleDatagram(&(datagram->source), &(datagram->destination));
   }
   else //last fragment!
   {
-    txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_DATAGRAM_LAST);
+    txBuffer.setLastDatagram(&(datagram->source), &(datagram->destination));
   }
 
   while(!sendMessage());
@@ -314,9 +314,7 @@ bool OLCB_CAN_Link::sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request)
   }
   memcpy(&_nodeIDToBeVerified, request, sizeof(OLCB_NodeID));
   //sendVerifiedNID(_nodeID);
-  //txBuffer.init(_nodeID);
-  txBuffer.init(src); //set the source NID to the requesting NID
-  txBuffer.setVerifyNID(request);
+  txBuffer.setVerifyNID(src, request);
   while(!sendMessage());  // wait for queue, but earlier check says will succeed
   _aliasCacheTimer = millis(); //set the clock going. A request will only be permitted to stand for 1 second.
   return true;
@@ -326,12 +324,7 @@ bool OLCB_CAN_Link::ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest)
 {
   if(!can_check_free_buffer())
     return false;
-  txBuffer.init(source);
-  txBuffer.setDestinationNID(dest);
-  txBuffer.setFrameTypeOpenLcb();
-  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_MESSAGE);
-  txBuffer.data[0] = MTI_DATAGRAM_RCV_OK;
-  txBuffer.length = 1;
+  txBuffer.setDatagramAck(source, dest);
   //Serial.println("Sending ACK");
   //Serial.println(txBuffer.data[0], HEX);
   while(!sendMessage());
@@ -343,16 +336,9 @@ bool OLCB_CAN_Link::nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reas
 	//Serial.println("Sending Datagram NAK");
   if(!can_check_free_buffer())
     return false;
-  txBuffer.init(source);
-  txBuffer.setDestinationNID(dest);
-  txBuffer.setFrameTypeOpenLcb();
-  txBuffer.setOpenLcbFormat(MTI_FORMAT_ADDRESSED_MESSAGE);
-  txBuffer.data[0] = MTI_DATAGRAM_REJECTED;
-  txBuffer.data[1] = (reason>>8)&0xFF;
-  txBuffer.data[2] = reason&0xFF;
+  txBuffer.setDatagramNak(source, dest, reason);
   //Serial.println(txBuffer.data[1], HEX);
   //Serial.println(txBuffer.data[2], HEX);
-  txBuffer.length = 3;
   while(!sendMessage());
   return true;
 }
@@ -362,7 +348,6 @@ bool OLCB_CAN_Link::sendVerifiedNID(OLCB_NodeID *nid)
 //	//Serial.println("Attempting to send VerifiedNID!");
   if(!can_check_free_buffer())
     return false;
-  txBuffer.init(nid);
   txBuffer.setVerifiedNID(nid);
   while(!sendMessage());
   return true;
@@ -372,7 +357,6 @@ bool OLCB_CAN_Link::sendAMR(OLCB_NodeID *nid)
 {
   if(!can_check_free_buffer())
     return false;
-  txBuffer.init(nid);
   txBuffer.setAMR(nid);
   while(!sendMessage());
   return true;
@@ -382,57 +366,56 @@ bool OLCB_CAN_Link::sendAMD(OLCB_NodeID *nid)
 {
   if(!can_check_free_buffer())
     return false;
-  txBuffer.init(nid);
   txBuffer.setAMD(nid);
   while(!sendMessage());
   return true;
 }
 
 
-bool OLCB_CAN_Link::sendIdent(void)
+bool OLCB_CAN_Link::sendIdent(OLCB_NodeID* source)
 {
 	OLCB_Event e(0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x00);
-	return sendPCER(&e);
+	return sendPCER(source, &e);
 }
 
-bool OLCB_CAN_Link::sendPCER(OLCB_Event *event)
+bool OLCB_CAN_Link::sendPCER(OLCB_NodeID* source, OLCB_Event *event)
 {
     if(!can_check_free_buffer())
         return false;
-    txBuffer.setPCEventReport(event);
+    txBuffer.setPCEventReport(source, event);
     while(!sendMessage());
     return true;
 }
 
-bool OLCB_CAN_Link::sendConsumerIdentified(OLCB_Event *event)
+bool OLCB_CAN_Link::sendConsumerIdentified(OLCB_NodeID* source, OLCB_Event *event)
 {
 	//Serial.println("sending Consumer Identified");
     if(!can_check_free_buffer())
     {
         return false;
     }
-    txBuffer.setConsumerIdentified(event);
+    txBuffer.setConsumerIdentified(source, event);
     while(!sendMessage());
     return true;
 }
 
-bool OLCB_CAN_Link::sendLearnEvent(OLCB_Event *event)
+bool OLCB_CAN_Link::sendLearnEvent(OLCB_NodeID* source, OLCB_Event *event)
 {
     if(!can_check_free_buffer())
         return false;
-    txBuffer.setLearnEvent(event);
+    txBuffer.setLearnEvent(source, event);
     while(!sendMessage()); //TODO make a new method for sendMessage that also repeats it back to the link!
     return true;
 }
 
-bool OLCB_CAN_Link::sendProducerIdentified(OLCB_Event *event)
+bool OLCB_CAN_Link::sendProducerIdentified(OLCB_NodeID* source, OLCB_Event *event)
 {    
 	//Serial.println("sending Producer Identified");
     if(!can_check_free_buffer())
     {
         return false;
     }
-    txBuffer.setProducerIdentified(event);
+    txBuffer.setProducerIdentified(source, event);
     while(!sendMessage())
     {
     }

@@ -419,36 +419,47 @@ void OLCB_CAN_Alias_Helper::idleAlias(OLCB_NodeID* nodeID)
 	slot->state = ALIAS_HOLDING_STATE;
 }
 
-void OLCB_CAN_Alias_Helper::verifyNID(OLCB_NodeID* nodeID)
+void OLCB_CAN_Alias_Helper::verifyNID(OLCB_CAN_Buffer *buf)
 {
 	//A couple of possibilities here. Either nodeID is empty, in which case we should send a verified nid for all our nids, or it's not, in which case we should only send one
-	if(nodeID->empty())
+	//first, is this a global request?
+	if(buf->isVerifyNIDGlobal())
 	{
-		//nodeID->print();
-		//Serial.println("empty nodeid, sending all");
-		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
-		{
-			if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
-			{
-				//_nodes[i].node->print();
-				_link->sendVerifiedNID(_nodes[i].node);
-			}
-		}
+	  //if it contains a NodeID, only that vnode that matches should respond. otherwise everyone does.
+	  if(buf->length == 6) //it has a nodeid
+	  {
+	    OLCB_NodeID nid;
+	    buf->getNodeID(&nid);
+	    for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	    {
+	      if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized && nid.sameNID(_nodes[i].node))
+	      {
+	        _link->sendVerifiedNID(_nodes[i].node);
+		    }
+		  }
+	  }
+	  else //everyone, together now!
+	  {
+  	  for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	    {
+	    	if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
+			  {
+	        _link->sendVerifiedNID(_nodes[i].node);
+	      }
+	    }
+	  }
 	}
-	else //not empty TODO
+	if(buf->isVerifyNIDAddressed())
 	{
-		//Serial.println("non-empty nodeid, searching");
-		//nodeID->print();
-		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
-		{
-			if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized && nodeID->sameNID(_nodes[i].node))
-			{
-				//Serial.println("found match");
-				//_nodes[i].node->print();
-				_link->sendVerifiedNID(_nodes[i].node);
-				break;
+	  // TODO NOT CLEAR WHAT PROPER RESPONSE IS HERE!!!!! for now, match only if alias matches.
+	  uint16_t alias = buf->getDestAlias();
+	  for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+	  {
+	    if(_nodes[i].node->initialized && (_nodes[i].alias == alias) )
+	    {
+	      _link->sendVerifiedNID(_nodes[i].node);
 			}
-		}
+	  }
 	}
 }
 
