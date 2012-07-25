@@ -117,11 +117,12 @@ class OLCB_CAN_Link : public OLCB_Link
   bool nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reason);
   
   //TODO This one needs implementation!
-  bool sendStream(OLCB_Stream *stream) {return false;}
+  bool sendStream(OLCB_NodeID* source, OLCB_Stream *stream) {return false;}
   //Not sure that this is how streams should work at all!
 
   //TODO does this need to be modified!?  
   bool sendVerifiedNID(OLCB_NodeID *nid);
+  bool sendVerifyNID(OLCB_NodeID *src);
   bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request);
 
   bool sendIdent(OLCB_NodeID* source);

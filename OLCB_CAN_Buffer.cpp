@@ -18,7 +18,7 @@ void OLCB_CAN_Buffer::setLength(uint8_t len)
 
 void OLCB_CAN_Buffer::setData(uint8_t *bytes, uint8_t len)
 {
-length = (len>8)?8:len;
+  length = (len>8)?8:len;
 	memcpy(data, bytes, length);
 }
 
@@ -39,15 +39,16 @@ internal = 0;
 	flags.extended = 1;
 	flags.rtr = 0;
 	length = 0;
-	id = 0x19000000 | SET_SRC_ALIAS(alias); //defaults to CAN_FRAME_TYPE_REGULAR, to be overridden if needed
+	id = 0x19000000; //defaults to CAN_FRAME_TYPE_REGULAR, to be overridden if needed
+	SET_SRC_ALIAS(id, alias);
 }
 
 // start of basic message structure
 
 void OLCB_CAN_Buffer::setSourceAlias(uint16_t a)
 {
-	id = CLEAR_SRC_ALIAS(id);
-	id = id | SET_SRC_ALIAS(a);
+	CLEAR_SRC_ALIAS(id);
+	SET_SRC_ALIAS(id, a);
 }
 
 uint16_t OLCB_CAN_Buffer::getSourceAlias(void)
@@ -83,28 +84,46 @@ void OLCB_CAN_Buffer::setDestAlias(uint16_t a)
 	//can only be called after the frame type and MTI have been set, as there are two ways of setting the destination
 	if(GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_REGULAR)
 	{
-		//datagram or stream
-		//goes in the MTI section
-		if(length == 0) length = 1;
-		data[0] |= (a & 0xFFF);
+		Serial.println("putting dest alias in payload");
+		if(length == 0) length = 2;
+		data[0] = (a & 0xFFF)>>8; //TODO overwrites "only" flag; multi-part messages will need to write flags here AFTER calling this method.
+		data[1] = (a & 0xFF);
+		Serial.println(a, HEX);
+		Serial.println(data[0], HEX);
+		Serial.println(data[1], HEX);
 	} //TODO no checks in place to see if MTI is really addressed!
 	else //datagram or stream
 	{
-		id = CLEAR_DEST_ALIAS(id);
-		id |= SET_DEST_ALIAS(a);
+		CLEAR_DEST_ALIAS(id);
+		SET_DEST_ALIAS(id, a);
 	}
 }
 
 uint16_t OLCB_CAN_Buffer::getDestAlias(void)
 {
-	if( (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_REGULAR) && (length >= 1) )
+	if(isFrameTypeCAN())
 	{
-		return data[0] & 0xFFF;
+		//Serial.println("Not an OpenLCB frame");
+		return 0;
+	}
+	if( (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_REGULAR) )
+	{
+		if(MTI_IS_ADDRESSED(getMTI()) && (length >= 2) )
+		{
+			uint16_t alias = (((uint16_t)(data[0]) << 8) | data[1]) & 0x0FFF;
+			return alias & 0xFFF;
+		}
+		else
+		{
+			return 0;
+		}
 	} //TODO no checks in place to see if MTI is really addressed!
-	else //datagram or stream
+	else if( isDatagram() || isStream() ) //datagram or stream
 	{
 		return GET_DEST_ALIAS(id);
 	}
+	
+	return 0;
 }
 
 void OLCB_CAN_Buffer::setDestNID(OLCB_NodeID *NID)
@@ -141,8 +160,8 @@ bool OLCB_CAN_Buffer::isFrameTypeOpenLcb(void)
 
 void OLCB_CAN_Buffer::setMTI(uint16_t f)
 {
-	id = CLEAR_MTI(id);
-	id |= SET_MTI(f);
+	CLEAR_MTI(id);
+	SET_MTI(id, f);
 }
 
 uint16_t OLCB_CAN_Buffer::getMTI(void)
@@ -190,7 +209,7 @@ void OLCB_CAN_Buffer::setRID(uint16_t alias)
 
 bool OLCB_CAN_Buffer::isRID(void)
 {
-		return isFrameTypeCAN() && getVariableField() == RID_VAR_FIELD;
+		return isFrameTypeCAN() && (getVariableField() == RID_VAR_FIELD);
 }
 
 void OLCB_CAN_Buffer::setAMR(OLCB_NodeID *nid)
@@ -204,7 +223,7 @@ void OLCB_CAN_Buffer::setAMR(OLCB_NodeID *nid)
 
 bool OLCB_CAN_Buffer::isAMR()
 {
-	return isFrameTypeCAN() && getVariableField() == AMR_VAR_FIELD;
+	return isFrameTypeCAN() && (getVariableField() == AMR_VAR_FIELD);
 }
 
 //TODO The source alias isn't getting set right here!
@@ -219,7 +238,7 @@ void OLCB_CAN_Buffer::setAMD(OLCB_NodeID *nid)
 
 bool OLCB_CAN_Buffer::isAMD()
 {
-	return isFrameTypeCAN() && getVariableField() == AMD_VAR_FIELD;
+	return isFrameTypeCAN() && (getVariableField() == AMD_VAR_FIELD);
 }
 
 void OLCB_CAN_Buffer::setAME(OLCB_NodeID *nid)
@@ -233,7 +252,7 @@ memcpy(data, nid->val, 6);
 
 bool OLCB_CAN_Buffer::isAME()
 {
-	return isFrameTypeCAN() && getMTI() == AME_VAR_FIELD;
+	return isFrameTypeCAN() && (getMTI() == AME_VAR_FIELD);
 }
 
 // end of CAN-level messages
@@ -242,9 +261,11 @@ bool OLCB_CAN_Buffer::isAME()
 
 bool OLCB_CAN_Buffer::isAddressed()
 {
-if( (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_REGULAR) && MTI_IS_ADDRESSED(id) )
-	return true;
-return false;
+  if( isFrameTypeOpenLcb() && (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_REGULAR) && MTI_IS_ADDRESSED(GET_MTI(id)) )
+  {
+	  return true;
+	}
+  return false;
 }
 
 // end of OpenLCB format and decode support
@@ -257,14 +278,14 @@ void OLCB_CAN_Buffer::setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_Nod
 	init(source->alias);
 	setMTI(MTI_OPT_INTERACTION_REJECTED);
 	setDestAlias(dest->alias);
-	length = 3; //first byte is dest
-	data[1] = (code>>8)&0xFF;//TODO!!
-	data[0] = code & 0xFF;
+	length = 4; //first two byte is dest
+	data[2] = (code>>8)&0xFF;//TODO!!
+	data[3] = code & 0xFF;
 }
 
 bool OLCB_CAN_Buffer::isRejectOptionalInteraction(void)
 {
-	return (getMTI() && MTI_OPT_INTERACTION_REJECTED);
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_OPT_INTERACTION_REJECTED);
 }
 	
 void OLCB_CAN_Buffer::setPCEventReport(OLCB_NodeID* source, OLCB_Event* eid)
@@ -277,7 +298,7 @@ init(source->alias);
 
 bool OLCB_CAN_Buffer::isPCEventReport(void)
 {
-		return (getMTI() == MTI_PC_EVENT_REPORT);
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_PC_EVENT_REPORT);
 }
 
 void OLCB_CAN_Buffer::setLearnEvent(OLCB_NodeID* source, OLCB_Event* eid)
@@ -290,7 +311,7 @@ void OLCB_CAN_Buffer::setLearnEvent(OLCB_NodeID* source, OLCB_Event* eid)
 
 bool OLCB_CAN_Buffer::isLearnEvent(void)
 {
-		return (getMTI() == MTI_LEARN_EVENT);
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_LEARN_EVENT);
 }
 
 void OLCB_CAN_Buffer::setInitializationComplete(OLCB_NodeID* source)
@@ -303,7 +324,7 @@ void OLCB_CAN_Buffer::setInitializationComplete(OLCB_NodeID* source)
 
 bool OLCB_CAN_Buffer::isInitializationComplete(void)
 {
-		return (getMTI() == MTI_INITIALIZATION_COMPLETE);
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_INITIALIZATION_COMPLETE);
 }
 
 void OLCB_CAN_Buffer::getEventID(OLCB_Event* evt)
@@ -322,25 +343,41 @@ void OLCB_CAN_Buffer::getEventID(OLCB_Event* evt)
 //This is used for messages that contain full nodeiD in payload
 void OLCB_CAN_Buffer::getNodeID(OLCB_NodeID* nid)
 {
+	//Serial.println("In getNodeID");
 	if( (length >= 6) && (isInitializationComplete() || isVerifyNID() || isVerifiedNID() || isAMD() || isAMR() || isAME()) )
 	{
 		uint8_t start = 0;
 		//in some cases, there will be a destination alias in the first byte.
 		if(isAddressed())
-			start = 1;
+		{
+			//Serial.println("message is addressed");
+			//Serial.println(getMTI(), HEX);
+			//Serial.println(MTI_IS_ADDRESSED(getMTI()), HEX);
+			//Serial.println(isAddressed(), HEX);
+			start = 2;
+		}
 		memcpy(nid->val, data+start, 6);
 	}
 // else just rely on the nid having been initialized to some value, which it will have been; by default 0.0.0.0.0.0
 }
 
-void OLCB_CAN_Buffer::setVerifyNID(OLCB_NodeID* source)
+void OLCB_CAN_Buffer::setVerifyNIDGlobal(OLCB_NodeID* source)
 {
 	init(source->alias);
 	setMTI(MTI_VERIFY_NID_GLOBAL);
 }
 
-void OLCB_CAN_Buffer::setVerifyNID(OLCB_NodeID* source, OLCB_NodeID *dest)
+void OLCB_CAN_Buffer::setVerifyNIDGlobal(OLCB_NodeID* source, OLCB_NodeID *dest)
 {
+	init(source->alias);
+	setMTI(MTI_VERIFY_NID_GLOBAL);
+	length = 6;
+	memcpy(data, dest->val, 6);
+}
+
+void OLCB_CAN_Buffer::setVerifyNIDAddressed(OLCB_NodeID* source, OLCB_NodeID *dest)
+{
+	//TODO presumes a valid alias!
 	init(source->alias);
 	setMTI(MTI_VERIFY_NID_ADDRESSED);
 	setDestAlias(dest->alias);
@@ -348,12 +385,12 @@ void OLCB_CAN_Buffer::setVerifyNID(OLCB_NodeID* source, OLCB_NodeID *dest)
 
 bool OLCB_CAN_Buffer::isVerifyNIDGlobal(void)
 {
-		return getMTI() == MTI_VERIFY_NID_GLOBAL;
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_VERIFY_NID_GLOBAL);
 }
 
 bool OLCB_CAN_Buffer::isVerifyNIDAddressed()
 {
-	return getMTI() == MTI_VERIFY_NID_ADDRESSED;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_VERIFY_NID_ADDRESSED);
 }
 
 bool OLCB_CAN_Buffer::isVerifyNID(void)
@@ -363,7 +400,7 @@ bool OLCB_CAN_Buffer::isVerifyNID(void)
 
 bool OLCB_CAN_Buffer::isVerifiedNID()
 {
-	return getMTI() == MTI_VERIFIED_NID;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_VERIFIED_NID);
 }
 
 void OLCB_CAN_Buffer::setVerifiedNID(OLCB_NodeID* source)
@@ -382,7 +419,7 @@ void OLCB_CAN_Buffer::setVerifiedNID(OLCB_NodeID* source)
 
 bool OLCB_CAN_Buffer::isIdentifyConsumers(void)
 {
-		return getMTI() == MTI_IDENTIFY_CONSUMERS;
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_IDENTIFY_CONSUMERS);
 }
 
 void OLCB_CAN_Buffer::setConsumerIdentified(OLCB_NodeID *source, OLCB_Event* eid)
@@ -404,7 +441,7 @@ void OLCB_CAN_Buffer::setConsumerIdentifyRange(OLCB_NodeID* source, OLCB_Event* 
 
 bool OLCB_CAN_Buffer::isIdentifyProducers(void)
 {
-		return getMTI() == MTI_IDENTIFY_PRODUCERS;
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_IDENTIFY_PRODUCERS);
 }
 
 void OLCB_CAN_Buffer::setProducerIdentified(OLCB_NodeID* source, OLCB_Event* eid)
@@ -426,12 +463,12 @@ void OLCB_CAN_Buffer::setProducerIdentifyRange(OLCB_NodeID* source, OLCB_Event* 
 
 bool OLCB_CAN_Buffer::isIdentifyEventsGlobal(void)
 {
-		return getMTI() == MTI_IDENTIFY_EVENTS_GLOBAL;
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_IDENTIFY_EVENTS_GLOBAL);
 }
 
 bool OLCB_CAN_Buffer::isIdentifyEventsAddressed(void)
 {
-		return getMTI() == MTI_IDENTIFY_EVENTS_ADDRESSED;
+		return isFrameTypeOpenLcb() && (getMTI() == MTI_IDENTIFY_EVENTS_ADDRESSED);
 }
 
 bool OLCB_CAN_Buffer::isIdentifyEvents(void)
@@ -455,37 +492,34 @@ void OLCB_CAN_Buffer::loadFromEid(OLCB_Event* eid)
 // general, but not efficient
 bool OLCB_CAN_Buffer::isDatagram(void)
 {
-	return ((GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_ONLY) ||
-		 (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_FIRST) ||
-		 (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_MIDDLE) ||
-		 (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_LAST));
+	return isOnlyDatagram() || isFirstDatagram() || isMiddleDatagram() || isLastDatagram();
 }
 
 bool OLCB_CAN_Buffer::isLastDatagram(void)
 {
-	return GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_LAST;
+	return isFrameTypeOpenLcb() && (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_LAST);
 }
 
 bool OLCB_CAN_Buffer::isFirstDatagram(void)
 {
-	return GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_FIRST;
+	return isFrameTypeOpenLcb() && (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_FIRST);
 }
 
 bool OLCB_CAN_Buffer::isMiddleDatagram(void)
 {
-	return GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_MIDDLE;
+	return isFrameTypeOpenLcb() && (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_MIDDLE);
 }
 
 bool OLCB_CAN_Buffer::isOnlyDatagram(void)
 {
-	return GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_ONLY;
+	return isFrameTypeOpenLcb() && (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_DATAGRAM_ONLY);
 }
 
 void OLCB_CAN_Buffer::setOnlyDatagram(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
 	init(source->alias);
 	CLEAR_CAN_FRAME_TYPE(id);
-	id |= SET_CAN_FRAME_TYPE(CAN_FRAME_TYPE_DATAGRAM_ONLY);
+	SET_CAN_FRAME_TYPE(id, CAN_FRAME_TYPE_DATAGRAM_ONLY);
 	setDestAlias(dest->alias);
 }
 
@@ -493,7 +527,7 @@ void OLCB_CAN_Buffer::setFirstDatagram(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
 	init(source->alias);
 	CLEAR_CAN_FRAME_TYPE(id);
-	id |= SET_CAN_FRAME_TYPE(CAN_FRAME_TYPE_DATAGRAM_FIRST);
+	SET_CAN_FRAME_TYPE(id, CAN_FRAME_TYPE_DATAGRAM_FIRST);
 	setDestAlias(dest->alias);
 }
 
@@ -501,7 +535,7 @@ void OLCB_CAN_Buffer::setMiddleDatagram(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
 	init(source->alias);
 	CLEAR_CAN_FRAME_TYPE(id);
-	id |= SET_CAN_FRAME_TYPE(CAN_FRAME_TYPE_DATAGRAM_MIDDLE);
+	SET_CAN_FRAME_TYPE(id, CAN_FRAME_TYPE_DATAGRAM_MIDDLE);
 	setDestAlias(dest->alias);
 }
 
@@ -509,14 +543,13 @@ void OLCB_CAN_Buffer::setLastDatagram(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
 	init(source->alias);
 	CLEAR_CAN_FRAME_TYPE(id);
-	id |= SET_CAN_FRAME_TYPE(CAN_FRAME_TYPE_DATAGRAM_LAST);
+	SET_CAN_FRAME_TYPE(id, CAN_FRAME_TYPE_DATAGRAM_LAST);
 	setDestAlias(dest->alias);
 }
 
-
 bool OLCB_CAN_Buffer::isDatagramAck()
 {
-	return getMTI() == MTI_DATAGRAM_OK;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_DATAGRAM_OK);
 }
 
 void OLCB_CAN_Buffer::setDatagramAck(OLCB_NodeID* source, OLCB_NodeID* dest)
@@ -528,7 +561,7 @@ void OLCB_CAN_Buffer::setDatagramAck(OLCB_NodeID* source, OLCB_NodeID* dest)
 
 bool OLCB_CAN_Buffer::isDatagramNak()
 {
-	return getMTI() == MTI_DATAGRAM_REJECTED;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_DATAGRAM_REJECTED);
 }
 
 void OLCB_CAN_Buffer::setDatagramNak(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t reason)
@@ -536,9 +569,9 @@ void OLCB_CAN_Buffer::setDatagramNak(OLCB_NodeID* source, OLCB_NodeID* dest, uin
 	init(source->alias);
 	setMTI(MTI_DATAGRAM_REJECTED);
 	setDestAlias(dest->alias);
-	length = 3; //one for dest alias, two for reason
-  data[1] = (reason>>8)&0xFF;//TODO!!
-	data[0] = reason & 0xFF;
+	length = 4; //two for dest alias, two for reason
+  data[2] = (reason>>8)&0xFF;//TODO!!
+	data[3] = reason & 0xFF;
 
 }
 
@@ -552,15 +585,19 @@ uint16_t OLCB_CAN_Buffer::getDatagramNakErrorCode()
 		return 0;
 }
 
+bool OLCB_CAN_Buffer::isStream(void)
+{
+	return isFrameTypeOpenLcb() && (GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_STREAM);
+}
 
 bool OLCB_CAN_Buffer::isProtocolSupportInquiry(void)
 {
-	return getMTI() == MTI_PROTOCOL_SUPPORT_INQUIRY;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_PROTOCOL_SUPPORT_INQUIRY);
 }
 
 bool OLCB_CAN_Buffer::isProtocolSupportReply(void)
 {
-	return getMTI() == MTI_PROTOCOL_SUPPORT_REPLY;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_PROTOCOL_SUPPORT_REPLY);
 }
 
 bool OLCB_CAN_Buffer::setProtocolSupportInquiry(OLCB_NodeID* source, OLCB_NodeID* dest)
@@ -572,8 +609,11 @@ bool OLCB_CAN_Buffer::setProtocolSupportInquiry(OLCB_NodeID* source, OLCB_NodeID
 
 bool OLCB_CAN_Buffer::setProtocolSupportReply(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
+	//Serial.println("in setProtocolSupportReply");
 	init(source->alias);
-	setMTI(MTI_PROTOCOL_SUPPORT_INQUIRY);
+	//Serial.println(id, HEX);
+	setMTI(MTI_PROTOCOL_SUPPORT_REPLY);
+	//Serial.println(id, HEX);
 	setDestAlias(dest->alias);
 }
 
@@ -581,17 +621,17 @@ bool OLCB_CAN_Buffer::setProtocolSupportReply(OLCB_NodeID* source, OLCB_NodeID* 
 
 bool OLCB_CAN_Buffer::isSNIIRequest(void)
 {
-	return getMTI() == MTI_SNII_REQUEST;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_SNII_REQUEST);
 }
 
 bool OLCB_CAN_Buffer::isSNIIReply(void)
 {
-	return getMTI() == MTI_SNII_REQUEST;
+	return isFrameTypeOpenLcb() && (getMTI() == MTI_SNII_REPLY);
 }
 
 void OLCB_CAN_Buffer::setSNIIReply(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
 	init(source->alias);
-	setMTI(MTI_SNII_REQUEST);
+	setMTI(MTI_SNII_REPLY);
 	setDestAlias(dest->alias);
 }

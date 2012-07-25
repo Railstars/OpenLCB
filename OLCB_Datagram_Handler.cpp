@@ -17,6 +17,10 @@ bool OLCB_Datagram_Handler::sendDatagram(OLCB_Datagram *datagram)
     _loc = 0;
     _sentTime = millis(); //log the final transmission time for response timeout checking
 
+    //Serial.println(_txDatagramBuffer->length, DEC);
+    //for(uint8_t i = 0; i < _txDatagramBuffer->length; ++i)
+	    //Serial.println(_txDatagramBuffer->data[i], HEX);
+
     return true;
 }
 
@@ -31,11 +35,11 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 	{
 		return false;
 	}
-	//Serial.println("datagram handle message");
+	  //Serial.println("datagram handle message");
     //First, make sure we are dealing with a datagram.
     if(!frame->isDatagram())
     {
-    	//Serial.println("not a datagram");
+    	  //Serial.println("not a datagram");
         //see if it is an addressed non-datagram to us, and if it is an expected ACK or NAK
         if(frame->isDatagramAck())
         {
@@ -107,13 +111,13 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
 
     uint8_t *frame_data = frame->getData();;
     uint8_t frame_length = frame->getLength();
-    if( (frame->isFirstDatagram() && _rxDatagramBufferFree) ||
+    if( (frame->isFirstDatagram() && _rxDatagramBufferFree) || (frame->isOnlyDatagram() && _rxDatagramBufferFree) ||
         ( (n == _rxDatagramBuffer->source) && !_rxDatagramBufferFree) ) //first frame and free buffer, or continuing frame and not free buffer
     {
         //begin filling!
 
         //is this the first frame? Need to initialize the datagram buffer
-        if(frame->isFirstDatagram())
+        if(frame->isFirstDatagram() || frame->isOnlyDatagram())
         {
         	//Serial.println("Is first fragment!");
             _rxDatagramBufferFree = false;
@@ -138,12 +142,13 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
         }
 
 		//copy data from frame into _rxDatagramBuffer->data
-        for (uint8_t i=0; i< frame_length; i++) {
+        for (uint8_t i=0; i< frame_length; i++)
+        {
             _rxDatagramBuffer->data[i+_rxDatagramBuffer->length] = *(frame_data+i);
         }
         _rxDatagramBuffer->length += frame_length;
 
-        if(frame->isLastDatagram()) //Last frame? Need to ACK or NAK!
+        if(frame->isLastDatagram() || frame->isOnlyDatagram() ) //Last frame? Need to ACK or NAK!
         {
         	//Serial.println("Is last fragment!");
         	uint16_t errorcode = processDatagram();
@@ -164,11 +169,12 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
                 sendNak(&(_rxDatagramBuffer->source), errorcode);
                 //while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));
             }
+            //Serial.println("freeing rx buffer");
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }
         return true;
     }
-    else if(frame->isLastDatagram()) //we can't currently accept this frame, either because the buffer is not free, or we didn't see the first datagram fragment
+    else if(frame->isLastDatagram() || frame->isOnlyDatagram()) //we can't currently accept this frame, either because the buffer is not free, or we didn't see the first datagram fragment
     {
     	if(_rxDatagramBufferFree) //we missed the first frame somehow; perhaps it came while we were processing an earlier datagram
     	{
@@ -217,29 +223,31 @@ void OLCB_Datagram_Handler::update(void)
 		}
 		_ackReason = 0xFFFF;
 	}
-    else if(_txFlag) //We're in the middle of a transmission
-    {
-        uint8_t sent = _link->sendDatagramFragment(_txDatagramBuffer, _loc);
-        //TODO We should be checking for a 0 result here, as that might indicate trouble
-        if(!sent && (millis()-_sentTime) > DATAGRAM_ACK_TIMEOUT) //if nothing got transmitted, let's not get hung up. might not happen. Let it go for a couple of seconds, then give up
-        {
-            //give up
-        	//Serial.println("DG transmission timeout reached, freeing buffer");
-            _txDatagramBufferFree = true;
-            _txFlag = false;
-            datagramResult(false,DATAGRAM_ERROR_ABORTED);
-        }
-        else if(_loc+sent == _txDatagramBuffer->length) //we're done with this datagram
-        {
-            _txFlag = false; //done transmitting
-            _loc = 0; //reset the location
-            _sentTime = millis(); //log the final transmission time for response timeout checking
-        }
-        else
-        {
-            _loc += sent;
-        }
-    }
+	else if(_txFlag) //We're in the middle of a transmission
+	{
+			//Serial.println("in dghandler update");
+			//Serial.println("In middle of transmission");
+			uint8_t sent = _link->sendDatagramFragment(_txDatagramBuffer, _loc);
+			//TODO We should be checking for a 0 result here, as that might indicate trouble
+			if(!sent && (millis()-_sentTime) > DATAGRAM_ACK_TIMEOUT) //if nothing got transmitted, let's not get hung up. might not happen. Let it go for a couple of seconds, then give up
+			{
+					//give up
+				  //Serial.println("DG transmission timeout reached, freeing buffer");
+					_txDatagramBufferFree = true;
+					_txFlag = false;
+					datagramResult(false,DATAGRAM_ERROR_ABORTED);
+			}
+			else if(_loc+sent == _txDatagramBuffer->length) //we're done with this datagram
+			{
+					_txFlag = false; //done transmitting
+					_loc = 0; //reset the location
+					_sentTime = millis(); //log the final transmission time for response timeout checking
+			}
+			else
+			{
+					_loc += sent;
+			}
+	}
 
     //If we're not transmitting, but awaiting a response, make sure that the response hasn't timed out!
     else if(!_txDatagramBufferFree && ((millis()-_sentTime) > DATAGRAM_ACK_TIMEOUT) )

@@ -32,21 +32,21 @@ class OLCB_Link
   virtual bool sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request)  {return false;}
   virtual bool sendVerifyNID(OLCB_NodeID *src) {return false;} //global version
     
-  virtual bool sendIdent(void) {return false;}
+  virtual bool sendIdent(OLCB_NodeID* source) {return false;}
     
-  virtual bool sendPCER(OLCB_Event *event) {return true;}
+  virtual bool sendPCER(OLCB_NodeID* source, OLCB_Event *event) {return true;}
   
   virtual uint8_t sendDatagramFragment(OLCB_Datagram *datagram, uint8_t start) {return 0;}
   virtual bool ackDatagram(OLCB_NodeID *source, OLCB_NodeID *dest) {return true;}
   virtual bool nakDatagram(OLCB_NodeID *source, OLCB_NodeID *dest, int reason) {return true;}
   
-  virtual bool sendStream(OLCB_Stream *stream) {return true;}
+  virtual bool sendStream(OLCB_NodeID* source, OLCB_Stream *stream) {return true;}
   //Not sure that this is how streams should work at all!
   
   //TODO!!
-  virtual bool sendConsumerIdentified(OLCB_Event *event) {return false;}
-  virtual bool sendLearnEvent(OLCB_Event *event) {return false;}
-  virtual bool sendProducerIdentified(OLCB_Event *event) {return false;}
+  virtual bool sendConsumerIdentified(OLCB_NodeID* source, OLCB_Event *event) {return false;}
+  virtual bool sendLearnEvent(OLCB_NodeID* source, OLCB_Event *event) {return false;}
+  virtual bool sendProducerIdentified(OLCB_NodeID* source, OLCB_Event *event) {return false;}
   
  protected:
   OLCB_Virtual_Node* _handlers;

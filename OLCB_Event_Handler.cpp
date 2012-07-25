@@ -29,7 +29,7 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
         if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_PRODUCE_FLAG))
         {
         	//Serial.println("identify produced events!");
-            if(_link->sendProducerIdentified(&_events[_sendEvent]))
+            if(_link->sendProducerIdentified(NID, &_events[_sendEvent]))
             {
             	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
             }
@@ -37,8 +37,8 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
         }
         else if ( (_events[_sendEvent].flags & (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG)) == (IDENT_FLAG | OLCB_Event::CAN_CONSUME_FLAG))
         {
-        	//Serial.println("identify consumed events!");
-            if(_link->sendConsumerIdentified(&_events[_sendEvent]))
+        	  //Serial.println("identify consumed events!");
+            if(_link->sendConsumerIdentified(NID, &_events[_sendEvent]))
             {
             	_events[_sendEvent].flags &= ~IDENT_FLAG;    // reset flag
             }
@@ -48,8 +48,8 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
         {
 	        //Serial.print("producing ");
 	        //Serial.println(_sendEvent, DEC);
-            if(_link->sendPCER(&_events[_sendEvent]))
-         		_events[_sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag   
+            if(_link->sendPCER(NID, &_events[_sendEvent]))
+         		  _events[_sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag   
             break; // only send one from this loop
         }
         else if (_events[_sendEvent].flags & TEACH_FLAG)
@@ -58,7 +58,7 @@ void OLCB_Event_Handler::update(void) //this method should be overridden to dete
 			//Serial.println(_sendEvent, DEC);
 			//Serial.println(_events[_sendEvent].val[6], HEX);
 			//Serial.println(_events[_sendEvent].val[7], HEX);
-            _link->sendLearnEvent(&_events[_sendEvent]);
+            _link->sendLearnEvent(NID, &_events[_sendEvent]);
             	_events[_sendEvent].flags &= ~TEACH_FLAG;    // reset flag
             break; // only send one from this loop
         }
@@ -121,11 +121,12 @@ bool OLCB_Event_Handler::consume(uint16_t index)
 /* Protocol level interactions for every kind of virtual node */
 bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 {
+    //Serial.println("in OLCB_Event_Handler::handleMessage");
     bool retval = false;
     //first, check to see if it is an event
     if(buffer->isPCEventReport()) //it's what is colloquially known as an event! Or technically as a Producer-Consumer Event Report (!?)
     {
-    	//Serial.println("PCE");
+    	  //Serial.println("PCE");
         //great, get the EID, and call consume
         OLCB_Event event;
         buffer->getEventID(&event);
@@ -135,7 +136,7 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 
     else if(buffer->isIdentifyProducers()) //we may need to respond to this one
     {
-    	//Serial.println("IdentifyProducers");
+    	  //Serial.println("IdentifyProducers");
         // see if we produce the listed event
         OLCB_Event event;
         buffer->getEventID(&event);
@@ -144,7 +145,7 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 
     else if(buffer->isIdentifyConsumers())
     {
-    	//Serial.println("IdentifyConsumers");
+    	  //Serial.println("IdentifyConsumers");
         // see if we consume the listed event
         OLCB_Event event;
         buffer->getEventID(&event);
@@ -153,18 +154,18 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 
     else if(buffer->isIdentifyEvents() || buffer->isIdentifyEventsAddressed())
     {
-    	//Serial.println("IdentifyEvents");
+    	  //Serial.println("IdentifyEvents");
         // See if addressed to us
 		if(buffer->isIdentifyEventsAddressed()) //addressed variant
 		{
+		    //Serial.println("addressed");
 		    OLCB_NodeID n;
     		buffer->getDestNID(&n);
    			//Serial.print("got Identify Events for ");
    			//n.print();
    			//NID->print();
 
-			buffer->getDestNID(&n);
-			if(n.empty() || NID->sameNID(&n))//addressed to us
+			if(n.empty() || *NID == n)//addressed to us
 			{
 				//Serial.println("to us!");
 				retval = handleIdentifyEvents();
@@ -172,13 +173,14 @@ bool OLCB_Event_Handler::handleMessage(OLCB_Buffer *buffer)
 		}
 		else
 		{
-			//Serial.println("global!");
+			    //Serial.println("global!");
 	        retval = handleIdentifyEvents();
 	    }
     }
 
     else if(buffer->isLearnEvent())
     {
+        //Serial.println("LearnEvent");
         OLCB_Event event;
         buffer->getEventID(&event);
         retval = handleLearnEvent(&event);
@@ -197,7 +199,7 @@ bool OLCB_Event_Handler::handleIdentifyEvents(void)
 		_events[i].flags |= IDENT_FLAG;
 	}
 	_sendEvent = 0;
-    return true;
+  return true;
 }
 
 bool OLCB_Event_Handler::handlePCEventReport(OLCB_Event *event)

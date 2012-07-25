@@ -425,13 +425,18 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_CAN_Buffer *buf)
 	//first, is this a global request?
 	if(buf->isVerifyNIDGlobal())
 	{
+	  //Serial.println("handling a global VerifyNodeID");
 	  //if it contains a NodeID, only that vnode that matches should respond. otherwise everyone does.
 	  if(buf->length == 6) //it has a nodeid
 	  {
+	    //Serial.println("with address");
 	    OLCB_NodeID nid;
 	    buf->getNodeID(&nid);
+	    //nid.print();
 	    for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	    {
+	      //_nodes[i].node->print();
+	      //Serial.println(nid.sameNID(_nodes[i].node));
 	      if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized && nid.sameNID(_nodes[i].node))
 	      {
 	        _link->sendVerifiedNID(_nodes[i].node);
@@ -440,6 +445,7 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_CAN_Buffer *buf)
 	  }
 	  else //everyone, together now!
 	  {
+	    //Serial.println("without address");
   	  for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	    {
 	    	if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
@@ -451,8 +457,10 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_CAN_Buffer *buf)
 	}
 	if(buf->isVerifyNIDAddressed())
 	{
+	  //Serial.println("handling an addressed VerifyNodeID");
 	  // TODO NOT CLEAR WHAT PROPER RESPONSE IS HERE!!!!! for now, match only if alias matches.
 	  uint16_t alias = buf->getDestAlias();
+	  //Serial.println(alias, HEX);
 	  for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	  {
 	    if(_nodes[i].node->initialized && (_nodes[i].alias == alias) )

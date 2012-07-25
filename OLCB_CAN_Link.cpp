@@ -53,7 +53,8 @@ bool OLCB_CAN_Link::sendCID(OLCB_NodeID *nodeID, uint8_t i) {
   return true;
 }
 
-bool OLCB_CAN_Link::sendRID(OLCB_NodeID* nodeID) {
+bool OLCB_CAN_Link::sendRID(OLCB_NodeID* nodeID)
+{
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   txBuffer.setRID(nodeID->alias);
   memcpy(txBuffer.data, nodeID->val, 6); //This seems an important part of the message that is being left off!
@@ -61,15 +62,15 @@ bool OLCB_CAN_Link::sendRID(OLCB_NodeID* nodeID) {
   return true;
 }
 
-bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID) {
+bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID)
+{
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   txBuffer.setInitializationComplete(nodeID);
-  
   while(!sendMessage());    // wait for queue, but earlier check says will succeed
   return true;
 }
 
-bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* dest, OLCB_NodeID* source)
+bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest)
 {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   txBuffer.setRejectOptionalInteraction(source, dest);
@@ -258,6 +259,7 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   //datagram->destination.print();
   if(!datagram->destination.alias) //there is no alias here. We'll need to look it up.
   {
+  	//Serial.println("no alias in dest, looking up");
     //try the cache
     uint16_t alias = _translationCache.getAliasByNID(&(datagram->destination));
     //Serial.println(alias, HEX);
@@ -273,29 +275,39 @@ uint8_t OLCB_CAN_Link::sendDatagramFragment(OLCB_Datagram *datagram, uint8_t sta
   //now, figure out how many bytes remain, and whether this is the last fragment that needs to be sent.
   // Notice that the CAN link can send 8 bytes per frame.
   //set the source, and init the buffer.
-  
-  uint8_t len = min(datagram->length-start,8);
-  txBuffer.length = len;
-  for (uint8_t i = 0; i<txBuffer.length; i++)
-         txBuffer.data[i] = datagram->data[i+start];
   //several possible cases.
   if(start == 0) //first fragment
   {
-  	if(txBuffer.length+start < datagram->length) //and last fragment
+  	if(datagram->length > 8) //this is just the first
+  	{
+  		//Serial.println("first fragment");
   	  txBuffer.setFirstDatagram(&(datagram->source), &(datagram->destination));
-  	else
+  	}
+  	else //will fit into one message, so it is first and last.
+  	{
+  		//Serial.println("only fragment");
   	  txBuffer.setOnlyDatagram(&(datagram->source), &(datagram->destination));
+  	}
   }
-  else if(txBuffer.length+start < datagram->length) //not yet done!
+  else if((datagram->length - start) > 8) //not yet done!
   {
+  	//Serial.println("middle fragment");
     txBuffer.setMiddleDatagram(&(datagram->source), &(datagram->destination));
   }
   else //last fragment!
   {
+  	//Serial.println("last fragment");
     txBuffer.setLastDatagram(&(datagram->source), &(datagram->destination));
   }
+  
+  uint8_t len = min(datagram->length-start,8);
+  txBuffer.length = len;
+  for (uint8_t i = 0; i<txBuffer.length; i++)
+    txBuffer.data[i] = datagram->data[i+start];
 
+	//Serial.println("sending message");
   while(!sendMessage());
+  //Serial.println("Fragment away!");
   
   return len;
 }
@@ -314,7 +326,25 @@ bool OLCB_CAN_Link::sendVerifyNID(OLCB_NodeID *src, OLCB_NodeID *request)
   }
   memcpy(&_nodeIDToBeVerified, request, sizeof(OLCB_NodeID));
   //sendVerifiedNID(_nodeID);
-  txBuffer.setVerifyNID(src, request);
+  txBuffer.setVerifyNIDGlobal(src, request);
+  while(!sendMessage());  // wait for queue, but earlier check says will succeed
+  _aliasCacheTimer = millis(); //set the clock going. A request will only be permitted to stand for 1 second.
+  return true;
+}
+
+bool OLCB_CAN_Link::sendVerifyNID(OLCB_NodeID *src)
+{
+  //first, see if a request is pending
+//  uint32_t time = millis();
+  //TODO this mechanism could be severely improved to permit multiple verifyIDs to be sent out!!
+  if(!_nodeIDToBeVerified.empty() && ((millis() - _aliasCacheTimer) < 2000) ) //it's not zeros, and it hasn't yet been a full second since the last request
+  {
+    return false;
+  }  
+  if (!can_check_free_buffer()){
+    return false;  // couldn't send just now
+  }
+  txBuffer.setVerifyNIDGlobal(src);
   while(!sendMessage());  // wait for queue, but earlier check says will succeed
   _aliasCacheTimer = millis(); //set the clock going. A request will only be permitted to stand for 1 second.
   return true;
@@ -410,15 +440,14 @@ bool OLCB_CAN_Link::sendLearnEvent(OLCB_NodeID* source, OLCB_Event *event)
 
 bool OLCB_CAN_Link::sendProducerIdentified(OLCB_NodeID* source, OLCB_Event *event)
 {    
-	//Serial.println("sending Producer Identified");
+   	//Serial.println("sending Producer Identified");
     if(!can_check_free_buffer())
     {
+    		//Serial.println("no free buffer");
         return false;
     }
     txBuffer.setProducerIdentified(source, event);
-    while(!sendMessage())
-    {
-    }
+    while(!sendMessage());
     return true;
 }
 
