@@ -156,7 +156,7 @@
     void setAME(OLCB_NodeID *nid);
     bool isAME();
     bool isAddressed();
-    void setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t code = 0x0000);
+    void setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t MTI, uint16_t code = 0x0000);
     bool isRejectOptionalInteraction(void);
     void setPCEventReport(OLCB_NodeID* source, OLCB_Event* eid);
     bool isPCEventReport(void);

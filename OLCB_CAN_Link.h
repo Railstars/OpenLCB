@@ -175,7 +175,7 @@ class OLCB_CAN_Link : public OLCB_Link
    * false if you didn't.
    */
   bool sendInitializationComplete(OLCB_NodeID* nodeID);
-  bool sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest);  
+  bool sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t MTI);  
   bool sendAMR(OLCB_NodeID *nid);
   bool sendAMD(OLCB_NodeID *nid);
   bool sendAME(OLCB_NodeID *nid);

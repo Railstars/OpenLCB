@@ -84,13 +84,13 @@ void OLCB_CAN_Buffer::setDestAlias(uint16_t a)
 	//can only be called after the frame type and MTI have been set, as there are two ways of setting the destination
 	if(GET_CAN_FRAME_TYPE(id) == CAN_FRAME_TYPE_REGULAR)
 	{
-		Serial.println("putting dest alias in payload");
+		//Serial.println("putting dest alias in payload");
 		if(length == 0) length = 2;
 		data[0] = (a & 0xFFF)>>8; //TODO overwrites "only" flag; multi-part messages will need to write flags here AFTER calling this method.
 		data[1] = (a & 0xFF);
-		Serial.println(a, HEX);
-		Serial.println(data[0], HEX);
-		Serial.println(data[1], HEX);
+		//Serial.println(a, HEX);
+		//Serial.println(data[0], HEX);
+		//Serial.println(data[1], HEX);
 	} //TODO no checks in place to see if MTI is really addressed!
 	else //datagram or stream
 	{
@@ -273,14 +273,16 @@ bool OLCB_CAN_Buffer::isAddressed()
 // start of OpenLCB messages
 
 
-void OLCB_CAN_Buffer::setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t code)
+void OLCB_CAN_Buffer::setRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t MTI, uint16_t code)
 {
 	init(source->alias);
 	setMTI(MTI_OPT_INTERACTION_REJECTED);
 	setDestAlias(dest->alias);
-	length = 4; //first two byte is dest
-	data[2] = (code>>8)&0xFF;//TODO!!
-	data[3] = code & 0xFF;
+	length = 6; //first two byte is dest
+	data[2] = (MTI>>8)&0x0F;
+	data[3] = MTI & 0xFF;
+	data[4] = (code>>8)&0xFF;
+	data[5] = code & 0xFF;
 }
 
 bool OLCB_CAN_Buffer::isRejectOptionalInteraction(void)

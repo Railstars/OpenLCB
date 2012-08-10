@@ -70,10 +70,10 @@ bool OLCB_CAN_Link::sendInitializationComplete(OLCB_NodeID* nodeID)
   return true;
 }
 
-bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest)
+bool OLCB_CAN_Link::sendRejectOptionalInteraction(OLCB_NodeID* source, OLCB_NodeID* dest, uint16_t MTI)
 {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
-  txBuffer.setRejectOptionalInteraction(source, dest);
+  txBuffer.setRejectOptionalInteraction(source, dest, MTI);
   while(!sendMessage());  // wait for queue, but earlier check says will succeed
   return true;
 }
@@ -246,7 +246,7 @@ void OLCB_CAN_Link::deliverMessage(void)
     {
     	//Serial.println("Message was external, addressed to us, and not handled");
     	rxBuffer.getSourceNID(&n);
-    	sendRejectOptionalInteraction(dest_node, &n);
+    	sendRejectOptionalInteraction(dest_node, &n, rxBuffer.getMTI());
     }
 }
 
