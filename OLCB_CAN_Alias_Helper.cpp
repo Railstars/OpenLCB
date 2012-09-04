@@ -475,7 +475,7 @@ void OLCB_CAN_Alias_Helper::sendAMD(OLCB_NodeID* nodeID)
 {
 	for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	{
-		if(_nodes[i].alias && nodeID->sameNID(_nodes[i].node))
+		if(_nodes[i].alias && (nodeID->sameNID(_nodes[i].node) || nodeID->empty()) )
 		{
 			//Serial.println("found match");
 			//_nodes[i].node->print();
