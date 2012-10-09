@@ -29,7 +29,7 @@ class OLCB_Datagram_Handler : public OLCB_Virtual_Node
 #endif
   }
     
-  bool handleMessage(OLCB_Buffer *frame);
+  virtual bool handleMessage(OLCB_Buffer *frame);
   
   virtual void update(void);
   

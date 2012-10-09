@@ -16,8 +16,12 @@ void OLCB_Link::update(void)//called repeatedly
   
 void OLCB_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
+  Serial.println("link adding vnode");
+  Serial.println((int)_handlers, HEX);
   vnode->next = _handlers;
   _handlers = vnode;
+  Serial.println((int)_handlers, HEX);
+  Serial.println((int)(_handlers->next), HEX);
 }
 
 void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
@@ -44,6 +48,7 @@ void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
   {
 //    //Serial.println("The first item is the one to remove!");
     _handlers = vnode->next;
+    vnode->next = NULL;
   }
   else
   {
@@ -55,6 +60,7 @@ void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)
 //        //Serial.println((uint16_t)iter, HEX);
         //remove it from the list
        iter->next = vnode->next;
+       vnode->next = NULL;
         break;
       }
      iter = iter->next;

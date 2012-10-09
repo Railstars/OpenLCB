@@ -272,7 +272,7 @@ void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
 	//Serial.println("Allocating Alias for:");
-	//nodeID->print();
+	nodeID->print();
 	private_nodeID_t *slot = 0;
 	//first, see if this NodeID is already in our list, and if so, don't worry about it.TODO
 	uint8_t i;
@@ -300,6 +300,9 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	{
 		for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 		{
+		  //Serial.print("Checking slot ");
+		  //Serial.println(i, DEC);
+		  //Serial.println(_nodes[i].state, DEC);
 			if(_nodes[i].state == ALIAS_EMPTY_STATE)
 			{
 				//Serial.println("allocate: found a slot w/o alias!");
@@ -323,7 +326,7 @@ void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 	if(slot->alias)
 	{
 		//Serial.print("allocate: no need to allocate alias: ");
-	    //Serial.println(slot->alias, DEC);
+	  //Serial.println(slot->alias, DEC);
 		slot->node->alias = slot->alias; //copy it into the nodeID
 		slot->state = ALIAS_AMD_STATE; //ready to go! Just send an AMD
 	}

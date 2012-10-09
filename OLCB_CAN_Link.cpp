@@ -94,7 +94,8 @@ bool OLCB_CAN_Link::handleTransportLevel()
     	//if is addressed, and nodeIde matches, respond.
       //pass it off to the alias helper, since it maintains a definitive list of registered nodeIDs
       _aliasHelper.verifyNID(&rxBuffer);
-      return true;
+      //notice that other vnodes might have an interest in this message. For this reason, return false to ensure it gets passed along
+      return false;
     }
     // Perhaps it is someone sending a Verified NID packet. We might have requested that, in which case we should cache it
     else if (rxBuffer.isVerifiedNID())
@@ -200,7 +201,7 @@ void OLCB_CAN_Link::deliverMessage(void)
     // See if this message is a CAN-level message that we should be handling.
     if(handleTransportLevel())
     {
-		//bail early, the packet grabbed isn't for any of the attached handlers to deal with
+    	//if it was handled successfully, we are done with it.
 	     return;
 	}
     //otherwise, let's pass it on to our handlers
@@ -478,6 +479,7 @@ bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
 	OLCB_Link::addVNode(vnode);
+	Serial.println("CAN Link about to allocate alias");
 	_aliasHelper.allocateAlias(vnode->NID);
 }
 

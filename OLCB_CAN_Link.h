@@ -29,9 +29,9 @@
 //YOU MUST SET THIS TO EQUAL THE NUMBER OF NIDS YOU WISH TO USE!
 //This definition is pretty bad, but universally useable
 #if defined(__AVR_ATMEGA328__) || defined(__AVR_ATMEGA168__)
-#define CAN_ALIAS_BUFFER_SIZE   1
+#define CAN_ALIAS_BUFFER_SIZE 5
 #else
-#define CAN_ALIAS_BUFFER_SIZE	1
+#define CAN_ALIAS_BUFFER_SIZE	10
 #endif
 
 #define RID_TIME_WAIT           500 //ms. Up for debate how long this should be!
