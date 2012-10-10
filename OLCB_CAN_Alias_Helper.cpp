@@ -272,7 +272,7 @@ void OLCB_CAN_Alias_Helper::preAllocateAliases(void)
 void OLCB_CAN_Alias_Helper::allocateAlias(OLCB_NodeID* nodeID)
 {
 	//Serial.println("Allocating Alias for:");
-	nodeID->print();
+	//nodeID->print();
 	private_nodeID_t *slot = 0;
 	//first, see if this NodeID is already in our list, and if so, don't worry about it.TODO
 	uint8_t i;

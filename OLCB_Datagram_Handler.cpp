@@ -164,7 +164,8 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             }
             else
             {
-            	//Serial.println("NAKING!");
+            	//Serial.print("NAKING! Reason:");
+            	//Serial.println(errorcode, HEX);
             	//TODO BROKEN! SHOULD NOT DO THIS!!!
                 sendNak(&(_rxDatagramBuffer->source), errorcode);
                 //while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));

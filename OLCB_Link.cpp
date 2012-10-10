@@ -16,12 +16,12 @@ void OLCB_Link::update(void)//called repeatedly
   
 void OLCB_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
-  Serial.println("link adding vnode");
-  Serial.println((int)_handlers, HEX);
+  //Serial.println("link adding vnode");
+  //Serial.println((int)_handlers, HEX);
   vnode->next = _handlers;
   _handlers = vnode;
-  Serial.println((int)_handlers, HEX);
-  Serial.println((int)(_handlers->next), HEX);
+  //Serial.println((int)_handlers, HEX);
+  //Serial.println((int)(_handlers->next), HEX);
 }
 
 void OLCB_Link::removeVNode(OLCB_Virtual_Node *vnode)

@@ -479,7 +479,7 @@ bool OLCB_CAN_Link::sendMessage(OLCB_Buffer *msg)
 void OLCB_CAN_Link::addVNode(OLCB_Virtual_Node *vnode)
 {
 	OLCB_Link::addVNode(vnode);
-	Serial.println("CAN Link about to allocate alias");
+	//Serial.println("CAN Link about to allocate alias");
 	_aliasHelper.allocateAlias(vnode->NID);
 }
 

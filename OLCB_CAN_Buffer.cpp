@@ -579,9 +579,9 @@ void OLCB_CAN_Buffer::setDatagramNak(OLCB_NodeID* source, OLCB_NodeID* dest, uin
 
 uint16_t OLCB_CAN_Buffer::getDatagramNakErrorCode()
 {
-	if(length >= 3)
+	if(length >= 4)
 	{
-		return (data[1]<<8) | (data[2]);
+		return ((uint16_t)data[2]<<8) | (data[3]);
 	}
 	else
 		return 0;
