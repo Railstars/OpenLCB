@@ -204,7 +204,7 @@ void OLCB_CAN_Buffer::setRID(uint16_t alias)
 	init(alias);
 	setFrameTypeCAN();
 	setVariableField(RID_VAR_FIELD);
-	length=6;
+	length=0;
 }
 
 bool OLCB_CAN_Buffer::isRID(void)

@@ -57,7 +57,6 @@ bool OLCB_CAN_Link::sendRID(OLCB_NodeID* nodeID)
 {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   txBuffer.setRID(nodeID->alias);
-  memcpy(txBuffer.data, nodeID->val, 6); //This seems an important part of the message that is being left off!
   while(!sendMessage());  // wait for queue, but earlier check says will succeed
   return true;
 }
