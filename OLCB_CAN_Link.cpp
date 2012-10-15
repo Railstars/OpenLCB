@@ -38,14 +38,13 @@ bool OLCB_CAN_Link::sendCID(OLCB_NodeID *nodeID, uint8_t i) {
   if (!can_check_free_buffer()) return false;  // couldn't send just now
   uint16_t fragment;
   switch (i) {
-    case 1:  fragment = ( (nodeID->val[0]<<4)&0xFF0) | ( (nodeID->val[1] >> 4) &0xF);
+    case 1:  fragment = ( (nodeID->val[0] << 4) | ( (nodeID->val[1]&0xF0) >>4) );
              break;
-    case 2:  fragment = ( (nodeID->val[1]<<8)&0xF00) | ( nodeID->val[2] &0xF);
+    case 2:  fragment = ( ((nodeID->val[1]&0x0F) << 8) | ( nodeID->val[2]) );
              break;
-    case 3:  fragment = ( (nodeID->val[3]<<4)&0xFF0) | ( (nodeID->val[4] >> 4) &0xF);
+    case 3:  fragment = ( (nodeID->val[3] << 4) | ( (nodeID->val[4]&0xF0) >>4) );
              break;
-    default:
-    case 4:  fragment = ( (nodeID->val[4]<<8)&0xF00) | ( nodeID->val[5] &0xF);
+    case 4:  fragment = ( ((nodeID->val[4]&0x0F) << 8) | ( nodeID->val[5]) );
              break;
   }
   txBuffer.setCID(i,fragment,nodeID->alias);
