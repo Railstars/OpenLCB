@@ -424,6 +424,12 @@ bool OLCB_CAN_Buffer::isIdentifyConsumers(void)
 		return isFrameTypeOpenLcb() && (getMTI() == MTI_IDENTIFY_CONSUMERS);
 }
 
+bool OLCB_CAN_Buffer::isConsumerIdentified(void)
+{
+	return isFrameTypeOpenLcb() &&
+		 ((getMTI() == MTI_CONSUMER_IDENTIFIED_UNKNOWN_VALIDITY) || (getMTI() == MTI_CONSUMER_IDENTIFIED_VALID)  || (getMTI() == MTI_CONSUMER_IDENTIFIED_INVALID) );
+}
+
 void OLCB_CAN_Buffer::setConsumerIdentified(OLCB_NodeID *source, OLCB_Event* eid)
 {
 	init(source->alias);
@@ -444,6 +450,12 @@ void OLCB_CAN_Buffer::setConsumerIdentifyRange(OLCB_NodeID* source, OLCB_Event* 
 bool OLCB_CAN_Buffer::isIdentifyProducers(void)
 {
 		return isFrameTypeOpenLcb() && (getMTI() == MTI_IDENTIFY_PRODUCERS);
+}
+
+bool OLCB_CAN_Buffer::isProducerIdentified(void)
+{
+	return isFrameTypeOpenLcb() &&
+		 ((getMTI() == MTI_PRODUCER_IDENTIFIED_UNKNOWN_VALIDITY) || (getMTI() == MTI_PRODUCER_IDENTIFIED_VALID)  || (getMTI() == MTI_PRODUCER_IDENTIFIED_INVALID) );
 }
 
 void OLCB_CAN_Buffer::setProducerIdentified(OLCB_NodeID* source, OLCB_Event* eid)

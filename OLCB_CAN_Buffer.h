@@ -176,11 +176,13 @@
     void setVerifiedNID(OLCB_NodeID* source);
     
     bool isIdentifyConsumers(void);
+    bool isConsumerIdentified(void);
     void setConsumerIdentified(OLCB_NodeID *source, OLCB_Event* eid);
     void setConsumerIdentifyRange(OLCB_NodeID* source, OLCB_Event* eid, OLCB_Event* mask);
     bool isIdentifyProducers(void);
     void setProducerIdentified(OLCB_NodeID* source, OLCB_Event* eid);
     void setProducerIdentifyRange(OLCB_NodeID* source, OLCB_Event* eid, OLCB_Event* mask);
+    bool isProducerIdentified(void);
     bool isIdentifyEventsGlobal(void);
     bool isIdentifyEventsAddressed(void);
     bool isIdentifyEvents(void);

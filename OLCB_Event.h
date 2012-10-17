@@ -31,6 +31,18 @@ class OLCB_Event {
       val[7] = b7;
   }
   
+  bool is(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7)
+  {
+      return (val[0] == b0) &&
+      (val[1] == b1) &&
+      (val[2] == b2) &&
+      (val[3] == b3) &&
+      (val[4] == b4) &&
+      (val[5] == b5) &&
+      (val[6] == b6) &&
+      (val[7] == b7);
+  }
+  
   bool operator==(const OLCB_Event &other) const
   {
     return  (val[0]==other.val[0])&&(val[1]==other.val[1])
