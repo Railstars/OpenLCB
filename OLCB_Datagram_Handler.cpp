@@ -112,7 +112,7 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
     uint8_t *frame_data = frame->getData();;
     uint8_t frame_length = frame->getLength();
     if( (frame->isFirstDatagram() && _rxDatagramBufferFree) || (frame->isOnlyDatagram() && _rxDatagramBufferFree) ||
-        ( (n == _rxDatagramBuffer->source) && !_rxDatagramBufferFree) ) //first frame and free buffer, or continuing frame and not free buffer
+        ( (frame->isMiddleDatagram() || frame->isLastDatagram()) && (n == _rxDatagramBuffer->source) && !_rxDatagramBufferFree) ) //first frame and free buffer, or continuing frame and not free buffer
     {
         //begin filling!
 
@@ -158,40 +158,35 @@ bool OLCB_Datagram_Handler::handleMessage(OLCB_Buffer *frame)
             {
             	//TODO we should probably move this to the update loop! Don't want to block here, I don't think.
                 //Serial.println("ACKING!");
-                //TODO BROKEN! SHOULD NOT DO THIS!!!
-                sendAck(&(_rxDatagramBuffer->source));
-                //while(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source)));
+				if(!_link->ackDatagram(NID,&(_rxDatagramBuffer->source))) //try to ack, and if fail, queue an ack for later
+	                sendAck(&(_rxDatagramBuffer->source));
             }
             else
             {
             	//Serial.print("NAKING! Reason:");
             	//Serial.println(errorcode, HEX);
-            	//TODO BROKEN! SHOULD NOT DO THIS!!!
-                sendNak(&(_rxDatagramBuffer->source), errorcode);
-                //while(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode));
+                if(!_link->nakDatagram(NID,&(_rxDatagramBuffer->source), errorcode)) //try to send, if if fail, queue for later
+					sendNak(&(_rxDatagramBuffer->source), errorcode);
             }
             //Serial.println("freeing rx buffer");
             _rxDatagramBufferFree = true; //in either case, the buffer is now free
         }
         return true;
     }
-    else if(frame->isLastDatagram() || frame->isOnlyDatagram()) //we can't currently accept this frame, either because the buffer is not free, or we didn't see the first datagram fragment
+    else if( (frame->isLastDatagram() || frame->isOnlyDatagram()) && _rxDatagramBufferFree)
+	//we can't currently accept this frame because we didn't see the first datagram fragment
     {
-    	if(_rxDatagramBufferFree) //we missed the first frame somehow; perhaps it came while we were processing an earlier datagram
-    	{
-    		//Serial.println("NAKing datagram, missed first frame");
+    	//Serial.println("NAKing datagram, missed first frame");
+    	if(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER))
     		sendNak(&n, DATAGRAM_REJECTED_OUT_OF_ORDER);
-    		//while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_OUT_OF_ORDER));
-    	}
-    	else
-    	{
-    		//Serial.println("NAKing datagram, buffer full");
-    		sendNak(&n, DATAGRAM_REJECTED_BUFFER_FULL);
-        	//while(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL));
-        }
-        return true;
-    }
-    return true; //if we reach here, we have a middle DG fragment addressed to us; just don't take any kind of action whatsoever, including sending OptionalInteractionRejected (which is what would happen if we returned false
+	}
+    else //got here because our buffer was full.
+    {
+    	//Serial.println("NAKing datagram, buffer full");
+		if(!_link->nakDatagram(NID, &n, DATAGRAM_REJECTED_BUFFER_FULL))
+	    	sendNak(&n, DATAGRAM_REJECTED_BUFFER_FULL);
+	}
+	return true; //returning ture here prevents emitting spurious OIR
 }
 
 void OLCB_Datagram_Handler::sendNak(OLCB_NodeID *dest, uint16_t reason)

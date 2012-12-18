@@ -86,6 +86,11 @@
 #define MTI_STREAM_INITIATE_REPLY       0x868
 #define MTI_STREAM_DATA_PROCEED         0x888
 #define MTI_STREAM_DATA_COMPLETE        0x8A8
+
+
+#define MTI_TRACTION_CONTROL		0x5E8
+
+
 //from CanFrameTransferS
 #define RID_VAR_FIELD                   0x0700
 #define AMD_VAR_FIELD                   0x0701
@@ -180,7 +185,7 @@
     void setConsumerIdentified(OLCB_NodeID *source, OLCB_Event* eid);
     void setConsumerIdentifyRange(OLCB_NodeID* source, OLCB_Event* eid, OLCB_Event* mask);
     bool isIdentifyProducers(void);
-    void setProducerIdentified(OLCB_NodeID* source, OLCB_Event* eid);
+    void setProducerIdentified(OLCB_NodeID* source, OLCB_Event* eid, uint8_t active);
     void setProducerIdentifyRange(OLCB_NodeID* source, OLCB_Event* eid, OLCB_Event* mask);
     bool isProducerIdentified(void);
     bool isIdentifyEventsGlobal(void);
@@ -206,12 +211,15 @@
     
     bool isProtocolSupportInquiry(void);
     bool isProtocolSupportReply(void);
-    bool setProtocolSupportInquiry(OLCB_NodeID* source, OLCB_NodeID* dest);
-    bool setProtocolSupportReply(OLCB_NodeID* source, OLCB_NodeID* dest);
+    void setProtocolSupportInquiry(OLCB_NodeID* source, OLCB_NodeID* dest);
+    void setProtocolSupportReply(OLCB_NodeID* source, OLCB_NodeID* dest);
     
     bool isSNIIRequest(void);
     bool isSNIIReply(void);
     void setSNIIReply(OLCB_NodeID* source, OLCB_NodeID* dest);
+
+    bool isTractionControl(void);
+    void setTractionControl(OLCB_NodeID* source, OLCB_NodeID* dest);
   
     void setInternal(void) {internal = true;}
     void setExternal(void) {internal = false;}

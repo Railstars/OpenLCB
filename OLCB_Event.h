@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include "Arduino.h"
 
+#define EVENT_STATE_UNKNOWN 0
+#define EVENT_STATE_ACTIVE 1
+#define EVENT_STATE_INACTIVE 2
+
 class OLCB_Event {
   public: 
   

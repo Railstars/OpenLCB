@@ -11,6 +11,8 @@
 #include "OLCB_Datagram.h"
 #include "OLCB_Stream.h"
 #include "OLCB_Alias_Cache.h"
+#include "float16.h"
+
 
 // state machine definitions NOT USED apparently!?
 #define STATE_INITIAL 0
@@ -130,7 +132,10 @@ class OLCB_CAN_Link : public OLCB_Link
   bool sendPCER(OLCB_NodeID* source, OLCB_Event *event);
   bool sendConsumerIdentified(OLCB_NodeID* source, OLCB_Event *event);
   bool sendLearnEvent(OLCB_NodeID* source, OLCB_Event *event);
-  bool sendProducerIdentified(OLCB_NodeID* source, OLCB_Event *event);
+  bool sendProducerIdentified(OLCB_NodeID* source, OLCB_Event *event, uint8_t active=EVENT_STATE_UNKNOWN);
+  
+  bool sendTractionControlSpeed(OLCB_NodeID* source, OLCB_NodeID* dest, _float16_shape_type speed);
+  bool sendTractionControlFX(OLCB_NodeID* source, OLCB_NodeID* dest, uint32_t address, uint16_t value);
 
   bool sendMessage(OLCB_Buffer *msg); //send an arbitrary message
   

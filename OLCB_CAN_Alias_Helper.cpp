@@ -360,18 +360,18 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_CAN_Buffer *buf)
 	    {
 	      if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized && nid.sameNID(_nodes[i].node))
 	      {
-	        _link->sendVerifiedNID(_nodes[i].node);
+                              _nodes[i].state = ALIAS_SENDVERIFIEDNID_STATE;
 		    }
 		  }
 	  }
 	  else //everyone, together now!
 	  {
-  	  for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
+  	    for(uint8_t i = 0; i < CAN_ALIAS_BUFFER_SIZE; ++i)
 	    {
-	    	if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
-			  {
-	        _link->sendVerifiedNID(_nodes[i].node);
-	      }
+	        if(_nodes[i].alias && _nodes[i].node && _nodes[i].node->initialized)
+			{
+                _nodes[i].state = ALIAS_SENDVERIFIEDNID_STATE;
+	        }
 	    }
 	  }
 	}
@@ -383,8 +383,7 @@ void OLCB_CAN_Alias_Helper::verifyNID(OLCB_CAN_Buffer *buf)
 	  {
 	    if(_nodes[i].node->initialized && (_nodes[i].alias == alias) )
 	    {
-	      _link->sendVerifiedNID(_nodes[i].node);
-			}
+            _nodes[i].state = ALIAS_SENDVERIFIEDNID_STATE;			}
 	  }
 	}
 }
