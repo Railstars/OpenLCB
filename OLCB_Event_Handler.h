@@ -25,6 +25,9 @@
 // Mark entry to send a learn message
 #define TEACH_FLAG 0x10
 
+//An abstract base class for handling the Producer-Consumer Event Protocol
+// Must be subclassed to be useful.
+
 class OLCB_Event_Handler: public OLCB_Virtual_Node
 {
 public:
@@ -40,8 +43,7 @@ public:
     /* Protocol level interactions for every kind of virtual node */
     bool handleMessage(OLCB_Buffer *buffer);
 
-    /* I don't understand what this method does, so I just copied it directly */
-    void newEvent(int index, bool p, bool c);
+    void newEvent(int index, bool isProduced, bool isConsumed);
     
     void markToLearn(int index, bool mark);
     void markToTeach(int index, bool mark);

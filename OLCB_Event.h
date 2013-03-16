@@ -8,6 +8,8 @@
 #define EVENT_STATE_ACTIVE 1
 #define EVENT_STATE_INACTIVE 2
 
+//Represents OLCB Producer-Consumer Event Reports (PCERs)
+
 class OLCB_Event {
   public: 
   

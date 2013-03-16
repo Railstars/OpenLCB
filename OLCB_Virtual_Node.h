@@ -12,6 +12,11 @@
 class OLCB_Link;
 
 
+//A class for representing a virtual node. A virtual node is a state machine for handling
+// one or more application-level protocols. Each board must implement at least one virtual node.
+// Generally, this class will not be subclassed directly, but rather through one of the intermediate
+// abstract base classes Event_Handler, Datagram_Hander, or Stream_Handler, depending on the
+// transport method used by the protocol.
 
 class OLCB_Virtual_Node
 {

@@ -6,6 +6,7 @@
 #define OLCB_DEBUG
 #include "Arduino.h"
 
+//Represents a unique identifier assigned permanently to each node (physical or virtual)
 class OLCB_NodeID {
   public:
   

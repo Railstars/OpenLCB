@@ -4,7 +4,7 @@
 #include "OLCB_NodeID.h"
 
 #ifndef DATAGRAM_LENGTH
-#define DATAGRAM_LENGTH 72
+#define DATAGRAM_LENGTH 72 //could be less if it is known that no datagram that will ever be sent on this network will be this long.
 #endif
 
 // some error messages for datagram rejected response messages
@@ -20,17 +20,8 @@
 #define DATAGRAM_REJECTED_RESEND_MASK            0x2000
 #define DATAGRAM_REJECTED_TRANSPORT_ERROR_MASK   0x4000
 
-/*************************
- A few things to worry about.
- Sending a datagram:
-   -> datagram chunk 1
-   -> datagram chunk 2, etc.
-   <- ACK
-     or
-   <- NAK
-   Need a way to retrieve the ACK or NAK from the Link Controller. Means that certain kinds of events need to be passed to datagrams. Hrm.
-*************************/
 
+//A class for representing a datagram object
 class OLCB_Datagram
 {
  public:

@@ -15,6 +15,7 @@
 class OLCB_Virtual_Node;
 
 /* An abstract base class representing a physical link to the outside world */
+//Must be subclassed for each physical layer available, currently only CAN
 
 class OLCB_Link
 {

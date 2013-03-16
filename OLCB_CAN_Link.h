@@ -63,7 +63,7 @@ struct private_nodeID_t
     uint32_t lfsr1, lfsr2;
 };
 
-/* This class is a helper class that manages the allocation of aliases */
+/* This class is a helper class that manages the state machine for allocating CAN aliases to local virtual nodes */
 
 class OLCB_CAN_Alias_Helper
 {
@@ -97,6 +97,11 @@ class OLCB_CAN_Alias_Helper
 };
 /**********************/
 
+/******************
+OLCB_CAN_Link is our gateway to the outside world. We require one instance for each
+CAN interface we wish to use.
+Manages each virtual node, and transparently handles all CAN aliasing requirements (which are manifold).
+******************/
 
 class OLCB_CAN_Link : public OLCB_Link
 {

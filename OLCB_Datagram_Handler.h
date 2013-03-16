@@ -13,7 +13,7 @@
 #define DATAGRAM_ERROR_ABORTED 0x1001
 #define DATAGRAM_ERROR_ACK_TIMEOUT 0x1002
 
-// An abstract class for handling the datagram protocol.
+// An abstract class for handling the datagram protocol. Must be subclassed to be useful.
 
 class OLCB_Datagram_Handler : public OLCB_Virtual_Node
 {

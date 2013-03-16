@@ -1,6 +1,16 @@
 #ifndef __OLCB_ALIAS_CACHE_H__
 #define __OLCB_ALIAS_CACHE_H__
 
+/********
+OLCB_Alias_Cache is a class that caches the aliases of all virtual nodes hosted in this
+board, as well as the most recently accessed NodeIDs elsewhere on the network.
+It watches for messages that add, delete, or modify the can aliases of any node.
+This class is here so that CAN aliases can be handled transparently, without any knowledge
+or dependencies by the end user of the library.
+Used by OLCB_Link
+********/
+
+
 class OLCB_Alias_Cache;
 
 #if defined(__AVR__)
@@ -20,7 +30,7 @@ class OLCB_Alias_Cache
   {
   }
   
-  void initialize(uint8_t newSize)
+  void initialize(uint8_t newSize) //must be AT LEAST the number of virtual nodes plus 1; the larger the more efficient sending addressed outbound messages will be
   {
     if(_size)
     {
