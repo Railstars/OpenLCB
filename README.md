@@ -1,27 +1,34 @@
-About:
+About
+-----
 "OpenLCB" is a library for using the OpenLCB protocol on the Arduino platform (and on AVRs more generally). Insofar as it has been tested, it has been made to work on an Arduino Uno with an MCP2515 (using hardware SPI), and on an OpenLCB Dev Board (AT90CAN128).
 This library was assembled by D.E. Goodman-Wilson from the hard work of the OpenLCB team.
 see: http://openlcb.sf.net
 
-License:
+License
+-------
 See LICENSE.TXT
 
-Features:
+Features
+--------
  * Unlimited (not really) virtual nodes permits a single piece of hardware to service several independent NodeIDs.
  * Transparent handling of alias translation.
  * Clever class organization ;)
  * Distinct layers are handled by distinct classes. The Datagram_Handler class deals with OpenLCB Datagram protocol without having to know about CAN, etc.
 
-Documentation:
+Documentation
+-------------
 Forthcoming.
 
-Dependencies:
+Dependencies
+------------
 "CAN" Arduino/AVR library (available from OpenLCB download site)
 
-Using:
+Using
+-----
 Copy this folder to the "libraries" folder in your Arduino sketchbook.
 
-TODO:
+TODO
+----
 This software should be considered a developers' preview, and is nothing like feature complete. Indeed, the following are all missing.
  * Need to seperate the VirtualNode abstract base class from the X_Handler classes, which should be structured as mixins. A virtual node will inhert VirtualNode, and whichever Handlers it needs.
  * Virtual Nodes are not informed whether they are in the inhibited or permitted state. I've added a mechanism in NodeID to do this: When NodeID is initialized, the owning node may move to the permitted state; when it is not, the owning node must move to the inhibited state. This behavior is not yet fully implemented
@@ -35,5 +42,4 @@ This software should be considered a developers' preview, and is nothing like fe
  * Inconsistent use of * and & paradigms for passing parameters by reference. Really? Who cares?
  * Many, many bugs to squash.
 
-BUGS:
- * Currently, no transport-layer messages (PCER, datagrams, etc) are transmitted between virtual nodes. This is a very large problem, that requires careful attention.
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Railstars/openlcb/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
