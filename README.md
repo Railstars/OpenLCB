@@ -42,4 +42,9 @@ This software should be considered a developers' preview, and is nothing like fe
  * Inconsistent use of * and & paradigms for passing parameters by reference. Really? Who cares?
  * Many, many bugs to squash.
 
+Discussion
+----------
+
+You can get support for the OpenLCB software at the Railstars [Support Forum](http://support.railstars.com/index.php?p=/categories/openlcb)
+
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Railstars/openlcb/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
